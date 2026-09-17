@@ -45,3 +45,340 @@
     box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
   }
   video { display: none; }
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .overlay-btn {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+  }
+  button {
+    background: var(--accent);
+    color: #111;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+  button.secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+  }
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .status {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: #888;
+    min-height: 1.2em;
+  }
+  .win {
+    color: var(--accent);
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<h1>Live Puzzle</h1>
+<p class="sub">Snap a photo of yourself, then pinch (thumb + index finger) a tile and drag it onto another tile to swap. Solve the puzzle to win.</p>
+
+<div class="stage" id="stage">
+  <video id="video" playsinline autoplay muted></video>
+  <canvas id="canvas"></canvas>
+  <div class="overlay-btn" id="captureBtnWrap">
+    <button id="captureBtn">📸 Capture Photo</button>
+  </div>
+</div>
+
+<div class="controls" id="postControls" style="display:none;">
+  <button id="shuffleBtn">🔀 Shuffle</button>
+  <button class="secondary" id="retakeBtn">↺ Retake Photo</button>
+</div>
+
+<div class="status" id="status">Allow camera access to begin…</div>
+
+<!-- MediaPipe Hands (loaded from jsDelivr CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+
+<script>
+(function () {
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const statusEl = document.getElementById('status');
+  const captureBtn = document.getElementById('captureBtn');
+  const captureBtnWrap = document.getElementById('captureBtnWrap');
+  const postControls = document.getElementById('postControls');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const retakeBtn = document.getElementById('retakeBtn');
+
+  const GRID = 3;
+  const W = 640, H = 480;
+  canvas.width = W;
+  canvas.height = H;
+
+  let captured = false;
+  let tileCanvases = [];        // 9 offscreen canvases, index = original tile id
+  let order = [];               // order[gridPos] = tileId currently occupying that grid cell
+  let heldTile = null;          // { tileId, fromPos }
+  let cursor = { x: 0, y: 0, visible: false };
+  let prevPinching = false;
+  let solvedShown = false;
+
+  function cellRect(gridPos) {
+    const col = gridPos % GRID;
+    const row = Math.floor(gridPos / GRID);
+    const cw = W / GRID, ch = H / GRID;
+    return { x: col * cw, y: row * ch, w: cw, h: ch };
+  }
+
+  function gridPosAt(x, y) {
+    if (x < 0 || y < 0 || x >= W || y >= H) return -1;
+    const col = Math.floor(x / (W / GRID));
+    const row = Math.floor(y / (H / GRID));
+    return row * GRID + col;
+  }
+
+  function sliceIntoTiles(sourceCanvas) {
+    tileCanvases = [];
+    const cw = W / GRID, ch = H / GRID;
+    for (let i = 0; i < GRID * GRID; i++) {
+      const col = i % GRID, row = Math.floor(i / GRID);
+      const tc = document.createElement('canvas');
+      tc.width = cw; tc.height = ch;
+      const tctx = tc.getContext('2d');
+      tctx.drawImage(sourceCanvas, col * cw, row * ch, cw, ch, 0, 0, cw, ch);
+      tileCanvases.push(tc);
+    }
+  }
+
+  function shuffle() {
+    order = [...Array(GRID * GRID).keys()];
+    // Fisher-Yates, then nudge if it happens to land solved
+    do {
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+    } while (isSolved());
+    solvedShown = false;
+    heldTile = null;
+  }
+
+  function isSolved() {
+    return order.every((v, i) => v === i);
+  }
+
+  function capturePhoto() {
+    const shot = document.createElement('canvas');
+    shot.width = W; shot.height = H;
+    const sctx = shot.getContext('2d');
+    // mirror horizontally so it feels like a selfie
+    sctx.translate(W, 0);
+    sctx.scale(-1, 1);
+    sctx.drawImage(video, 0, 0, W, H);
+    sliceIntoTiles(shot);
+    shuffle();
+    captured = true;
+    captureBtnWrap.style.display = 'none';
+    postControls.style.display = 'flex';
+    statusEl.textContent = 'Pinch a tile to pick it up, drag it onto another tile to swap.';
+  }
+
+  captureBtn.addEventListener('click', capturePhoto);
+  shuffleBtn.addEventListener('click', () => { shuffle(); statusEl.textContent = 'Shuffled! Solve it again.'; });
+  retakeBtn.addEventListener('click', () => {
+    captured = false;
+    captureBtnWrap.style.display = 'block';
+    postControls.style.display = 'none';
+    statusEl.textContent = 'Frame yourself and capture a new photo.';
+  });
+
+  function dist(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  function toCanvasPoint(landmark) {
+    // MediaPipe gives normalized [0,1] coords relative to the raw (unmirrored) frame.
+    // We mirror x to match the mirrored video/tile rendering.
+    return { x: (1 - landmark.x) * W, y: landmark.y * H };
+  }
+
+  function drawHandSkeleton(landmarks) {
+    const connections = [
+      [0,1],[1,2],[2,3],[3,4],
+      [0,5],[5,6],[6,7],[7,8],
+      [5,9],[9,10],[10,11],[11,12],
+      [9,13],[13,14],[14,15],[15,16],
+      [13,17],[17,18],[18,19],[19,20],
+      [0,17]
+    ];
+    ctx.strokeStyle = 'rgba(217,255,58,0.85)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    connections.forEach(([a, b]) => {
+      const pa = toCanvasPoint(landmarks[a]);
+      const pb = toCanvasPoint(landmarks[b]);
+      ctx.moveTo(pa.x, pa.y);
+      ctx.lineTo(pb.x, pb.y);
+    });
+    ctx.stroke();
+    landmarks.forEach(lm => {
+      const p = toCanvasPoint(lm);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  function render(handLandmarks) {
+    ctx.clearRect(0, 0, W, H);
+
+    if (!captured) {
+      // live mirrored video preview
+      ctx.save();
+      ctx.translate(W, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, W, H);
+      ctx.restore();
+    } else {
+      // draw grid tiles per current order, skipping the one being held
+      for (let pos = 0; pos < order.length; pos++) {
+        const tileId = order[pos];
+        if (heldTile && heldTile.tileId === tileId) continue;
+        const r = cellRect(pos);
+        ctx.drawImage(tileCanvases[tileId], r.x, r.y, r.w, r.h);
+      }
+      // grid lines
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i < GRID; i++) {
+        ctx.beginPath(); ctx.moveTo((W / GRID) * i, 0); ctx.lineTo((W / GRID) * i, H); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, (H / GRID) * i); ctx.lineTo(W, (H / GRID) * i); ctx.stroke();
+      }
+      // held tile follows the pinch cursor, slightly enlarged with shadow
+      if (heldTile && cursor.visible) {
+        const cw = W / GRID, ch = H / GRID;
+        const scale = 1.08;
+        const dw = cw * scale, dh = ch * scale;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 18;
+        ctx.drawImage(tileCanvases[heldTile.tileId], cursor.x - dw / 2, cursor.y - dh / 2, dw, dh);
+        ctx.restore();
+      }
+      if (isSolved()) {
+        if (!solvedShown) { statusEl.innerHTML = '<span class="win">🎉 Solved!</span>'; solvedShown = true; }
+        ctx.fillStyle = 'rgba(217,255,58,0.9)';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('SOLVED', W / 2, 28);
+      }
+    }
+
+    if (handLandmarks) {
+      drawHandSkeleton(handLandmarks);
+      if (cursor.visible) {
+        ctx.beginPath();
+        ctx.arc(cursor.x, cursor.y, 9, 0, Math.PI * 2);
+        ctx.strokeStyle = heldTile ? '#d9ff3a' : 'rgba(255,255,255,0.8)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+    }
+  }
+
+  function handlePinchLogic(landmarks) {
+    const thumbTip = toCanvasPoint(landmarks[4]);
+    const indexTip = toCanvasPoint(landmarks[8]);
+    // scale pinch threshold by hand size (wrist -> middle-finger MCP) so it works at any distance
+    const wrist = toCanvasPoint(landmarks[0]);
+    const midMcp = toCanvasPoint(landmarks[9]);
+    const handScale = Math.max(dist(wrist, midMcp), 20);
+    const pinchThreshold = handScale * 0.45;
+
+    const pinchDist = dist(thumbTip, indexTip);
+    const pinching = pinchDist < pinchThreshold;
+
+    cursor.x = (thumbTip.x + indexTip.x) / 2;
+    cursor.y = (thumbTip.y + indexTip.y) / 2;
+    cursor.visible = true;
+
+    if (!captured) { prevPinching = pinching; return; }
+
+    if (pinching && !prevPinching) {
+      // pinch just started -> pick up tile under cursor
+      const pos = gridPosAt(cursor.x, cursor.y);
+      if (pos !== -1 && !heldTile) {
+        heldTile = { tileId: order[pos], fromPos: pos };
+      }
+    } else if (!pinching && prevPinching) {
+      // pinch just released -> drop / swap
+      if (heldTile) {
+        const dropPos = gridPosAt(cursor.x, cursor.y);
+        if (dropPos !== -1 && dropPos !== heldTile.fromPos) {
+          const otherTile = order[dropPos];
+          order[dropPos] = heldTile.tileId;
+          order[heldTile.fromPos] = otherTile;
+        }
+        heldTile = null;
+      }
+    }
+    prevPinching = pinching;
+  }
+
+  // --- MediaPipe Hands setup ---
+  const hands = new Hands({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+  });
+  hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.6,
+    minTrackingConfidence: 0.6
+  });
+
+  hands.onResults((results) => {
+    let landmarks = null;
+    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+      landmarks = results.multiHandLandmarks[0];
+      handlePinchLogic(landmarks);
+    } else {
+      cursor.visible = false;
+      prevPinching = false;
+    }
+    render(landmarks);
+  });
+
+  const camera = new Camera(video, {
+    onFrame: async () => { await hands.send({ image: video }); },
+    width: W,
+    height: H
+  });
+
+  camera.start()
+    .then(() => { statusEl.textContent = 'Frame yourself and capture a photo.'; })
+    .catch((err) => {
+      statusEl.textContent = 'Camera access failed: ' + err.message;
+    });
+})();
+</script>
+</body>
+</html>
