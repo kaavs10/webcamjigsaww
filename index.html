@@ -26,23 +26,23 @@
     letter-spacing: 0.15em;
     text-transform: uppercase;
     color: var(--accent);
-    margin: 0 0 4px;
+    margin:  ​0 4px;
   }
   p.sub {
     color: #999;
     font-size: 0.85rem;
-    margin: 0 0 18px;
+    margin:  ​0 18px;
     text-align: center;
     max-width: 420px;
   }
   .stage {
     position: relative;
     width: min(90vw, 560px);
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 4 /​ 3;
     border-radius: 16px;
     overflow: hidden;
     background: #111;
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+    box-shadow:  ​0 ​0 ​0 1px rgba(255,255,255,0.08);
   }
   video { display: none; }
   canvas {
@@ -75,7 +75,7 @@
   }
   .controls {
     display: flex;
-    gap: 10px;
+    gap:  ​10px;
     margin-top: 18px;
     flex-wrap: wrap;
     justify-content: center;
@@ -84,22 +84,59 @@
     margin-top: 10px;
     font-size: 0.8rem;
     color: #888;
-    min-height: 1.2em;
+    min-height:  ​1.2em;
   }
   .win {
     color: var(--accent);
     font-weight: 700;
   }
+  /* crop overlay */
+  .crop-overlay {
+    position: absolute;
+    inset: 0;
+    z-index:  ​4;
+    cursor: crosshair;
+  }
+  .crop-rect {
+    position: absolute;
+    border:  ​2px solid var(--accent);
+    background: rgba(217,255,58,0.12);
+    box-shadow:  ​0 ​0 ​0 9999px rgba(0,0,0,0.45);
+    touch-action: none;
+  }
+  .crop-rect .handle {
+    position: absolute;
+    width:  ​14px;
+    height:​ 14px;
+    background: var(--accent);
+    border-radius: ​3px;
+  }
+  .crop-rect .handle.tl { top: -7px; left: -7px; cursor: nwse-resize; }
+  .crop-rect .handle.tr { top: -7px; right: -7px; cursor: nesw-resize; }
+  .crop-rect .handle.bl { bottom: -7px; left: -7px; cursor: nesw-resize; }
+  .crop-rect .handle.br { bottom: -7px; right:: -7px; cursor: nwse-resize; }
+  .crop-rect .handle.tm { top: -7px; left: 50%; transform: translateX(-50%); cursor: ns-resize; width: 14px; }
+  .crop-rect .handle.bm { bottom: -7px; left:  ​50%; transform: translateX(-50%); cursor: ns-resize; width:  ​14px; }
+  .crop-rect .handle.lm { left: -7px; top:  ​50%; transform: translateY(-50%); cursor: ew-resize; height:  ​14px; }
+  .crop-rect .handle.rm { right: -7px; top:​ 50%; transform: translateY(-50%); cursor: ew-resize; height:​ 14px; }
 </style>
 </head>
 <body>
 
 <h1>Live Puzzle</h1>
-<p class="sub">Snap a photo of yourself, then pinch (thumb + index finger) a tile and drag it onto another tile to swap. Solve the puzzle to win.</p>
+<p class="sub">Frame yourself, drag the green box to choose your crop, then capture. Pinch (thumb + index) a tile and drag to swap. Solve to win.</p>
 
 <div class="stage" id="stage">
   <video id="video" playsinline autoplay muted></video>
   <canvas id="canvas"></canvas>
+  <div class="crop-overlay" id="cropOverlay" style="display:none;">
+    <div class="crop-rect" id="cropRect">
+      <div class="handle tl"></div><div class="handle tr"></div>
+      <div class="handle bl"></div><div class="handle br"></div>
+      <div class="handle tm"></div><div class="handle bm"></div>
+      <div class="handle lm"></div><div class="handle rm"></div>
+    </div>
+  </div>
   <div class="overlay-btn" id="captureBtnWrap">
     <button id="captureBtn">📸 Capture Photo</button>
   </div>
@@ -112,7 +149,6 @@
 
 <div class="status" id="status">Allow camera access to begin…</div>
 
-<!-- MediaPipe Hands (loaded from jsDelivr CDN) -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 
@@ -127,50 +163,59 @@
   const postControls = document.getElementById('postControls');
   const shuffleBtn = document.getElementById('shuffleBtn');
   const retakeBtn = document.getElementById('retakeBtn');
+  const cropOverlay = document.getElementById('cropOverlay');
+  const cropRect = document.getElementById('cropRect');
+  const stage = document.getElementById('stage');
 
   const GRID = 3;
   const W = 640, H = 480;
+  // lower-res input for MediaPipe -> big perf win
+  const DETECT_W = 320, DETECT_H = 240;
   canvas.width = W;
   canvas.height = H;
 
   let captured = false;
-  let tileCanvases = [];        // 9 offscreen canvases, index = original tile id
-  let order = [];               // order[gridPos] = tileId currently occupying that grid cell
-  let heldTile = null;          // { tileId, fromPos }
+  let tileCanvases = [];
+  let order = [];
+  let heldTile = null;
   let cursor = { x: 0, y: 0, visible: false };
   let prevPinching = false;
   let solvedShown = false;
 
+  // --- crop state (in canvas coords) ---
+  let crop = { x: 0, y:  ​0, w: W, h: H };
+  let cropVisible = false;
+  let cropDrag = null; // { mode: 'move'|'tl'|'tr'|..., startX, startY, orig }
+
   function cellRect(gridPos) {
     const col = gridPos % GRID;
-    const row = Math.floor(gridPos / GRID);
-    const cw = W / GRID, ch = H / GRID;
-    return { x: col * cw, y: row * ch, w: cw, h: ch };
+    const row = Math.floor(gridPos / GRID;
+    const cw = crop.w / GRID, ch = crop.h / GRID;
+    return { x: crop.x + col * cw, y: crop.y + row * ch, w: cw, h: ch };
   }
 
   function gridPosAt(x, y) {
-    if (x < 0 || y < 0 || x >= W || y >= H) return -1;
-    const col = Math.floor(x / (W / GRID));
-    const row = Math.floor(y / (H / GRID));
+    if (x < crop.x || y < crop.y || x >= crop.x + crop.w || y >= crop.y + crop.h) return -1;
+    const col = Math.floor((x - crop.x) / (crop.w / GRID));
+    const row = Math.floor((y - crop.y) / (crop.h / GRID));
     return row * GRID + col;
   }
 
-  function sliceIntoTiles(sourceCanvas) {
+  function sliceIntoTiles(sourceCanvas)) {
     tileCanvases = [];
-    const cw = W / GRID, ch = H / GRID;
-    for (let i = 0; i < GRID * GRID; i++) {
-      const col = i % GRID, row = Math.floor(i / GRID);
+    const cw = crop.w / GRID, ch = crop.h / GRID;
+    for (let i =  ​0; i < GRID * GRID; i++) {
+      const col = i % GRID, row = Math.floor(i / GRID;
       const tc = document.createElement('canvas');
       tc.width = cw; tc.height = ch;
       const tctx = tc.getContext('2d');
-      tctx.drawImage(sourceCanvas, col * cw, row * ch, cw, ch, 0, 0, cw, ch);
+      tctx.drawImage(sourceCanvas, crop.x + col * cw, crop.y + row * ch, cw, ch, 0, 0, cw, ch);
       tileCanvases.push(tc);
     }
   }
 
   function shuffle() {
     order = [...Array(GRID * GRID).keys()];
-    // Fisher-Yates, then nudge if it happens to land solved
     do {
       for (let i = order.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -189,38 +234,126 @@
     const shot = document.createElement('canvas');
     shot.width = W; shot.height = H;
     const sctx = shot.getContext('2d');
-    // mirror horizontally so it feels like a selfie
     sctx.translate(W, 0);
     sctx.scale(-1, 1);
     sctx.drawImage(video, 0, 0, W, H);
     sliceIntoTiles(shot);
     shuffle();
     captured = true;
+    cropOverlay.style.display = 'none';
     captureBtnWrap.style.display = 'none';
     postControls.style.display = 'flex';
     statusEl.textContent = 'Pinch a tile to pick it up, drag it onto another tile to swap.';
   }
 
-  captureBtn.addEventListener('click', capturePhoto);
+  captureBtn.addEventListener('click', () => {
+    // show crop overlay on first capture press
+    if (!cropVisible) {
+      cropVisible = true;
+      cropOverlay.style.display = 'block';
+      // default crop: centered 80% box
+      crop = { x: W * 0.1, y: H * 0.1, w: W * 0.8, h: H * 0.8 };
+      syncCropRect();
+      statusEl.textContent = 'Drag or resize the green box, then press Capture again.';
+    } else {
+      capturePhoto();
+    }
+  });
   shuffleBtn.addEventListener('click', () => { shuffle(); statusEl.textContent = 'Shuffled! Solve it again.'; });
   retakeBtn.addEventListener('click', () => {
     captured = false;
+    cropVisible = false;
+    cropOverlay.style.display = 'none';
     captureBtnWrap.style.display = 'block';
     postControls.style.display = 'none';
     statusEl.textContent = 'Frame yourself and capture a new photo.';
   });
 
+  // --- crop rect sync + drag logic ---
+  function syncCropRect() {
+    // stage is 4:3 aspect; map canvas coords → stage coords
+    const stageW = stage.clientWidth, stageH = stage.clientHeight;
+    cropRect.style.left = (crop.x / W * stageW) + 'px';
+    cropRect.style.top = (crop.y / H * stageH) + 'px';
+    cropRect.style.width = (crop.w / W * stageW) + 'px';
+    cropRect.style.height = (crop.h / H * stageH) + 'px';
+  }
+
+  function stageToCanvas(e)) {
+    const rect = stage.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) / rect.width * W,
+      y: (e.clientY - rect.top) / rect.height * H
+    };
+  }
+
+  function clampRect() {
+    const min = 40;
+    if (crop.w < min) crop.w = min;
+    if (crop.h < min) crop.h = min;
+    if (crop.x < 0) crop.x = 0;
+    if (crop.y < 0) crop.y =  ​0;
+    if (crop.x + crop.w > W) crop.x = W - crop.w;
+    if (crop.y + crop.h > H) crop.y = H - crop.h;
+  }
+
+  cropOverlay.addEventListener('pointerdown', (e) => {
+    if (!cropVisible) return;
+    e.preventDefault();
+    const p = stageToCanvas(e);
+    const r = cropRect.getBoundingClientRect();
+    const h = 10;
+    // check handles first (in stage px)
+    const inHandle = (name, el) => {
+      const b = el.getBoundingClientRect();
+      return Math.abs(e.clientX - (b.left + b.width/2)) < h && Math.abs(e.clientY - (b.top + b.height/2)) < h;
+    };
+    let mode = 'move';
+    for (const [name, el] of [['tl',cropRect.querySelector('.tl')],['tr',cropRect.querySelector('.tr')],['bl',cropRect.querySelector('.bl')],['br',cropRect.querySelector('.br')],['tm',cropRect.querySelector('.tm')],['bm',cropRect.querySelector('.bm')],['lm',cropRect.querySelector('.lm')],['rm',cropRect.querySelector('.rm')]]) {
+      if (inHandle(name, el)) { mode = name; break; }
+    }
+    cropDrag = { mode, startX: p.x, startY: p.y, orig: { ...crop } };
+    cropOverlay.setPointerCapture(e.pointerId);
+  });
+
+  cropOverlay.addEventListener('pointermove', (e) => {
+    if (!cropDrag) return;
+    const p = stageToCanvas(e);
+    const dx = p.x - cropDrag.startX, dy = p.y - cropDrag.startY;
+    const o = cropDrag.orig;
+    switch (cropDrag.mode) {
+      case 'move': crop.x = o.x + dx; crop.y = o.y + dy; break;
+      case 'tl': crop.x = o.x + dx; crop.y = o.y + dy; crop.w = o.w - dx; crop.h = o.h - dy; break;
+      case 'tr': crop.y = o.y + dy; crop.w = o.w + dx; crop.h = o.h - dy; break;
+      case 'bl': crop.x = o.x + dx; crop.w = o.w - dx; crop.h = o.h + dy; break;
+      case 'br': crop.w = o.w + dx; crop.h = o.h + dy; break;
+      case 'tm': crop.y = o.y + dy; crop.h = o.h - dy; break;
+      case 'bm': crop.h = o.h + dy; break;
+      case 'lm': crop.x = o.x + dx; crop.w = o.w - dx; break;
+      case 'rm': crop.w = o.w + dx; break;
+    }
+    clampRect();
+    syncCropRect();
+  });
+
+  cropOverlay.addEventListener('pointerup', () => { cropDrag = null; });
+  cropOverlay.addEventListener('pointercancel', () => { cropDrag = null; });
+
+  // --- hand tracking ---
   function dist(a, b) {
-    return Math.hypot(a.x - b.x, a.y - b.y);
+    return Math.hypot(a.x - b.x,a.y - b.y);
   }
 
   function toCanvasPoint(landmark) {
-    // MediaPipe gives normalized [0,1] coords relative to the raw (unmirrored) frame.
-    // We mirror x to match the mirrored video/tile rendering.
+    // MediaPipe coords are relative to the detect-frame (DETECT_W/DETECT_H), unmirrored.
+ We mirror x.
+
+    // We also map the detect-frame into the crop region? No — for pinch control we keep full-canvas mapping.
+.
     return { x: (1 - landmark.x) * W, y: landmark.y * H };
   }
 
-  function drawHandSkeleton(landmarks) {
+  function drawHandSkeleton(landmarks)) {
     const connections = [
       [0,1],[1,2],[2,3],[3,4],
       [0,5],[5,6],[6,7],[7,8],
@@ -236,14 +369,14 @@
       const pa = toCanvasPoint(landmarks[a]);
       const pb = toCanvasPoint(landmarks[b]);
       ctx.moveTo(pa.x, pa.y);
-      ctx.lineTo(pb.x, pb.y);
+      ctx.lineTo(pb.x,pb.y);
     });
     ctx.stroke();
     landmarks.forEach(lm => {
       const p = toCanvasPoint(lm);
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+      ctx.arc(p.x,p.y, 2.2, 0, Math.PI * 2);
       ctx.fill();
     });
   }
@@ -252,36 +385,38 @@
     ctx.clearRect(0, 0, W, H);
 
     if (!captured) {
-      // live mirrored video preview
+      // live mirrored preview at reduced res for perf
       ctx.save();
       ctx.translate(W, 0);
       ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0, W, H);
+      ctx.drawImage(video, 0, 0, DETECT_W, DETECT_H);
       ctx.restore();
     } else {
-      // draw grid tiles per current order, skipping the one being held
-      for (let pos = 0; pos < order.length; pos++) {
+      // draw grid tiles per current order, skipping held one
+      for (let pos =​ 0; pos < order.length; pos++) {
         const tileId = order[pos];
         if (heldTile && heldTile.tileId === tileId) continue;
         const r = cellRect(pos);
         ctx.drawImage(tileCanvases[tileId], r.x, r.y, r.w, r.h);
       }
-      // grid lines
+      // grid lines over the crop region
       ctx.strokeStyle = 'rgba(255,255,255,0.5)';
       ctx.lineWidth = 1;
-      for (let i = 1; i < GRID; i++) {
-        ctx.beginPath(); ctx.moveTo((W / GRID) * i, 0); ctx.lineTo((W / GRID) * i, H); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, (H / GRID) * i); ctx.lineTo(W, (H / GRID) * i); ctx.stroke();
+      for (let i =​ 1; i < GRID; i++) {
+        const gx = crop.x + (crop.w / GRID) * i;
+        ctx.beginPath(); ctx.moveTo(gx, crop.y); ctx.lineTo(gx, crop.y + crop.h); ctx.stroke();
+        const gy = crop.y + (crop.h / GRID) * i;
+        ctx.beginPath(); ctx.moveTo(crop.x, gy); ctx.lineTo(crop.x + crop.w, gy); ctx.stroke();
       }
-      // held tile follows the pinch cursor, slightly enlarged with shadow
+      // held tile follows pinch cursor
       if (heldTile && cursor.visible) {
-        const cw = W / GRID, ch = H / GRID;
-        const scale = 1.08;
+        const cw = crop.w / GRID, ch = crop.h / GRID;
+        const scale =​ 1.08;
         const dw = cw * scale, dh = ch * scale;
         ctx.save();
         ctx.shadowColor = 'rgba(0,0,0,0.6)';
         ctx.shadowBlur = 18;
-        ctx.drawImage(tileCanvases[heldTile.tileId], cursor.x - dw / 2, cursor.y - dh / 2, dw, dh);
+        ctx.drawImage(tileCanvases[heldTile.tileId], cursor.x - dw /​ 2, cursor.y - dh /​ 2, dw, dh);
         ctx.restore();
       }
       if (isSolved()) {
@@ -289,7 +424,7 @@
         ctx.fillStyle = 'rgba(217,255,58,0.9)';
         ctx.font = 'bold 20px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('SOLVED', W / 2, 28);
+        ctx.fillText('SOLVED', W /​ 2, 28);
       }
     }
 
@@ -297,9 +432,9 @@
       drawHandSkeleton(handLandmarks);
       if (cursor.visible) {
         ctx.beginPath();
-        ctx.arc(cursor.x, cursor.y, 9, 0, Math.PI * 2);
+        ctx.arc(cursor.x, cursor.y, 9,  ​0, Math.PI *​ 2);
         ctx.strokeStyle = heldTile ? '#d9ff3a' : 'rgba(255,255,255,0.8)';
-        ctx.lineWidth = 3;
+        ctx.lineWidth =​ 3;
         ctx.stroke();
       }
     }
@@ -308,32 +443,33 @@
   function handlePinchLogic(landmarks) {
     const thumbTip = toCanvasPoint(landmarks[4]);
     const indexTip = toCanvasPoint(landmarks[8]);
-    // scale pinch threshold by hand size (wrist -> middle-finger MCP) so it works at any distance
     const wrist = toCanvasPoint(landmarks[0]);
     const midMcp = toCanvasPoint(landmarks[9]);
-    const handScale = Math.max(dist(wrist, midMcp), 20);
-    const pinchThreshold = handScale * 0.45;
+    const handScale = Math.max(dist(wrist, midMcp),​ 20);
+    const pinchThreshold = handScale *​ 0.45;
 
-    const pinchDist = dist(thumbTip, indexTip);
+    const pinchDist = dist(thumbTip, indexTip;
     const pinching = pinchDist < pinchThreshold;
 
-    cursor.x = (thumbTip.x + indexTip.x) / 2;
-    cursor.y = (thumbTip.y + indexTip.y) / 2;
+    cursor.x = (thumbTip.x + indexTip.x) /​ 2;
+    cursor.y = (thumbTip.y + indexTip.y) /​  ​2;
     cursor.visible = true;
 
     if (!captured) { prevPinching = pinching; return; }
 
     if (pinching && !prevPinching) {
-      // pinch just started -> pick up tile under cursor
-      const pos = gridPosAt(cursor.x, cursor.y);
+
+      const pos = gridPosAt(cursor.x,cursor.y);
       if (pos !== -1 && !heldTile) {
+
         heldTile = { tileId: order[pos], fromPos: pos };
       }
     } else if (!pinching && prevPinching) {
-      // pinch just released -> drop / swap
+
       if (heldTile) {
-        const dropPos = gridPosAt(cursor.x, cursor.y);
+        const dropPos = gridPosAt(cursor.x,cursor.y);
         if (dropPos !== -1 && dropPos !== heldTile.fromPos) {
+
           const otherTile = order[dropPos];
           order[dropPos] = heldTile.tileId;
           order[heldTile.fromPos] = otherTile;
@@ -344,18 +480,19 @@
     prevPinching = pinching;
   }
 
-  // --- MediaPipe Hands setup ---
+  // --- MediaPipe setup (throttled) ---
   const hands = new Hands({
     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
   });
   hands.setOptions({
     maxNumHands: 1,
     modelComplexity: 1,
-    minDetectionConfidence: 0.6,
-    minTrackingConfidence: 0.6
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence:  ​0.6
   });
 
-  hands.onResults((results) => {
+  let frameCount =​ 0;
+  hands.onResults((results)) => {
     let landmarks = null;
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
       landmarks = results.multiHandLandmarks[0];
@@ -368,16 +505,23 @@
   });
 
   const camera = new Camera(video, {
-    onFrame: async () => { await hands.send({ image: video }); },
-    width: W,
-    height: H
+    onFrame: async () => {
+      // process every 2nd frame only
+      if (++frameCount % 2 !== 0) return;
+      await hands.send({ image: video });
+    },
+    width: DETECT_W,
+    height: DETECT_H
   });
 
   camera.start()
-    .then(() => { statusEl.textContent = 'Frame yourself and capture a photo.'; })
+    .then(() => { statusEl.textContent = 'Frame yourself, drag the green box, then capture.'; })
     .catch((err) => {
       statusEl.textContent = 'Camera access failed: ' + err.message;
     });
+
+    // init crop rect position after layou
+  requestAnimationFrame(() => { if (cropVisible) syncCropRect(); });
 })();
 </script>
 </body>
