@@ -50,6 +50,8 @@
     color: #ddd;
     font-size: 0.78rem;
     margin: 0;
+    max-width: 480px;
+    margin: 0 auto;
   }
   .bottom-bar {
     position: fixed;
@@ -77,17 +79,6 @@
     color: var(--accent);
     border: 1.5px solid var(--accent);
   }
-  .status {
-    position: fixed;
-    bottom: max(78px, calc(env(safe-area-inset-bottom) + 78px));
-    left: 0; right: 0;
-    text-align: center;
-    font-size: 0.8rem;
-    color: #eee;
-    z-index: 10;
-    pointer-events: none;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-  }
 </style>
 </head>
 <body>
@@ -102,10 +93,13 @@
   <canvas id="canvas"></canvas>
 </div>
 
-<div class="status" id="status"></div>
-
 <div class="bottom-bar" id="captureBtnWrap">
   <button id="captureBtn">📸 Capture Photo</button>
+</div>
+
+<div class="bottom-bar" id="cropControls" style="display:none;">
+  <button id="confirmCropBtn">✅ Confirm Crop</button>
+  <button class="secondary" id="cancelCropBtn">✕ Cancel</button>
 </div>
 
 <div class="bottom-bar" id="postControls" style="display:none;">
@@ -122,18 +116,21 @@
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
   const instructions = document.getElementById('instructions');
-  const statusEl = document.getElementById('status');
   const captureBtn = document.getElementById('captureBtn');
   const captureBtnWrap = document.getElementById('captureBtnWrap');
+  const cropControls = document.getElementById('cropControls');
+  const confirmCropBtn = document.getElementById('confirmCropBtn');
+  const cancelCropBtn = document.getElementById('cancelCropBtn');
   const postControls = document.getElementById('postControls');
   const shuffleBtn = document.getElementById('shuffleBtn');
   const retakeBtn = document.getElementById('retakeBtn');
 
   const GRID = 3;
-  const DETECT_W = 320, DETECT_H = 240; // downscaled copy fed to MediaPipe for speed
+  const CROP_HOLD_MS = 5000;
+  // lower-res copy fed to MediaPipe — big perf win. Keep 4:3 to match the camera request below.
+  const DETECT_W = 240, DETECT_H = 180;
 
   let CANVAS_W = 0, CANVAS_H = 0;
-
   function resizeCanvas() {
     CANVAS_W = canvas.width = window.innerWidth;
     CANVAS_H = canvas.height = window.innerHeight;
@@ -154,9 +151,14 @@
   let prevPinching = false;
   let solvedShown = false;
 
-  // crop rect, in CANVAS pixel space
   let crop = { x: 0, y: 0, w: 0, h: 0 };
-  let cropGrab = null; // { mode: 'move'|'tl'|'tr'|'bl'|'br', startX, startY, orig }
+  let cropGrab = null; // single-hand drag: { mode, startX, startY, orig }
+  let twoHandTimerActive = false;
+  let twoHandTimerStart = 0;
+
+  // most recent processed hands (updated by MediaPipe, read by the render loop
+  // every frame so drawing stays smooth even between detections)
+  let cachedHands = [];
 
   // --- cover-fit video mapping (video -> full-screen canvas) ---
   function getCoverTransform() {
@@ -164,9 +166,7 @@
     const vh = video.videoHeight || DETECT_H;
     const scale = Math.max(CANVAS_W / vw, CANVAS_H / vh);
     const drawW = vw * scale, drawH = vh * scale;
-    const offsetX = (CANVAS_W - drawW) / 2;
-    const offsetY = (CANVAS_H - drawH) / 2;
-    return { vw, vh, scale, drawW, drawH, offsetX, offsetY };
+    return { vw, vh, scale, drawW, drawH, offsetX: (CANVAS_W - drawW) / 2, offsetY: (CANVAS_H - drawH) / 2 };
   }
 
   function drawCoverVideo(targetCtx) {
@@ -178,26 +178,30 @@
     targetCtx.restore();
   }
 
-  // maps a normalized MediaPipe landmark (from the raw, unmirrored video) to
-  // the same mirrored, cover-scaled canvas space everything else is drawn in
   function toCanvasPoint(landmark) {
     const t = getCoverTransform();
-    const rawX = landmark.x * t.vw;
-    const mirroredX = t.vw - rawX;
+    const mirroredX = t.vw - landmark.x * t.vw;
+    return { x: t.offsetX + mirroredX * t.scale, y: t.offsetY + landmark.y * t.vh * t.scale };
+  }
+
+  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+  function processHand(landmarks) {
+    const thumbTip = toCanvasPoint(landmarks[4]);
+    const indexTip = toCanvasPoint(landmarks[8]);
+    const wrist = toCanvasPoint(landmarks[0]);
+    const midMcp = toCanvasPoint(landmarks[9]);
+    const handScale = Math.max(dist(wrist, midMcp), 20);
+    const pinching = dist(thumbTip, indexTip) < handScale * 0.45;
     return {
-      x: t.offsetX + mirroredX * t.scale,
-      y: t.offsetY + landmark.y * t.vh * t.scale
+      landmarks, thumbTip, indexTip, wrist, midMcp, pinching,
+      pinchPoint: { x: (thumbTip.x + indexTip.x) / 2, y: (thumbTip.y + indexTip.y) / 2 }
     };
   }
 
   function defaultCrop() {
     const size = Math.min(CANVAS_W, CANVAS_H) * 0.82;
-    crop = {
-      x: (CANVAS_W - size) / 2,
-      y: (CANVAS_H - size) / 2,
-      w: size,
-      h: size
-    };
+    crop = { x: (CANVAS_W - size) / 2, y: (CANVAS_H - size) / 2, w: size, h: size };
   }
 
   function clampCrop() {
@@ -212,9 +216,19 @@
     if (crop.y + crop.h > CANVAS_H) crop.y = CANVAS_H - crop.h;
   }
 
+  // gentle bounds clamp used while a rectangle is actively being drawn out by
+  // two hands, so it doesn't fight the user's hand movement mid-gesture
+  function softClampCrop() {
+    if (crop.x < 0) { crop.w += crop.x; crop.x = 0; }
+    if (crop.y < 0) { crop.h += crop.y; crop.y = 0; }
+    if (crop.x + crop.w > CANVAS_W) crop.w = CANVAS_W - crop.x;
+    if (crop.y + crop.h > CANVAS_H) crop.h = CANVAS_H - crop.y;
+    if (crop.w < 10) crop.w = 10;
+    if (crop.h < 10) crop.h = 10;
+  }
+
   function cellRect(gridPos) {
-    const col = gridPos % GRID;
-    const row = Math.floor(gridPos / GRID);
+    const col = gridPos % GRID, row = Math.floor(gridPos / GRID);
     const cw = crop.w / GRID, ch = crop.h / GRID;
     return { x: crop.x + col * cw, y: crop.y + row * ch, w: cw, h: ch };
   }
@@ -233,8 +247,7 @@
       const col = i % GRID, row = Math.floor(i / GRID);
       const tc = document.createElement('canvas');
       tc.width = cw; tc.height = ch;
-      const tctx = tc.getContext('2d');
-      tctx.drawImage(sourceCanvas, crop.x + col * cw, crop.y + row * ch, cw, ch, 0, 0, cw, ch);
+      tc.getContext('2d').drawImage(sourceCanvas, crop.x + col * cw, crop.y + row * ch, cw, ch, 0, 0, cw, ch);
       tileCanvases.push(tc);
     }
   }
@@ -260,75 +273,66 @@
     sliceIntoTiles(shot);
     shuffle();
     phase = 'puzzle';
+    twoHandTimerActive = false;
+    cropGrab = null;
     captureBtnWrap.style.display = 'none';
+    cropControls.style.display = 'none';
     postControls.style.display = 'flex';
     instructions.textContent = 'Pinch a tile, drag it onto another to swap.';
-    statusEl.textContent = '';
   }
 
-  captureBtn.addEventListener('click', () => {
-    if (phase === 'preview') {
-      phase = 'crop';
-      defaultCrop();
-      captureBtn.textContent = '✅ Confirm Crop';
-      instructions.textContent = 'Pinch inside the box to move it, pinch a corner to resize.';
-      statusEl.textContent = '';
-    } else if (phase === 'crop') {
-      capturePhoto();
-      captureBtn.textContent = '📸 Capture Photo';
-    }
-  });
+  function enterCropPhase() {
+    phase = 'crop';
+    defaultCrop();
+    twoHandTimerActive = false;
+    cropGrab = null;
+    captureBtnWrap.style.display = 'none';
+    cropControls.style.display = 'flex';
+    instructions.textContent = 'One hand: pinch a corner or inside the box to adjust. Both hands: pinch with each and hold 5s to auto-frame & capture.';
+  }
 
-  shuffleBtn.addEventListener('click', () => {
-    shuffle();
-    instructions.textContent = 'Shuffled! Solve it again.';
-  });
-
-  retakeBtn.addEventListener('click', () => {
+  function backToPreview() {
     phase = 'preview';
-    captureBtn.textContent = '📸 Capture Photo';
+    twoHandTimerActive = false;
+    cropGrab = null;
     captureBtnWrap.style.display = 'flex';
+    cropControls.style.display = 'none';
     postControls.style.display = 'none';
     instructions.textContent = 'Frame yourself, then capture.';
-    statusEl.textContent = '';
-  });
+  }
 
-  // --- hand tracking ---
-  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+  captureBtn.addEventListener('click', enterCropPhase);
+  confirmCropBtn.addEventListener('click', () => { clampCrop(); capturePhoto(); });
+  cancelCropBtn.addEventListener('click', backToPreview);
+  shuffleBtn.addEventListener('click', () => { shuffle(); instructions.textContent = 'Shuffled! Solve it again.'; });
+  retakeBtn.addEventListener('click', backToPreview);
+
+  // === drawing ===
 
   function drawHandSkeleton(landmarks) {
     const connections = [
-      [0,1],[1,2],[2,3],[3,4],
-      [0,5],[5,6],[6,7],[7,8],
-      [5,9],[9,10],[10,11],[11,12],
-      [9,13],[13,14],[14,15],[15,16],
-      [13,17],[17,18],[18,19],[19,20],
-      [0,17]
+      [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
+      [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]
     ];
     ctx.strokeStyle = 'rgba(217,255,58,0.85)';
     ctx.lineWidth = 2;
     ctx.beginPath();
     connections.forEach(([a, b]) => {
-      const pa = toCanvasPoint(landmarks[a]);
-      const pb = toCanvasPoint(landmarks[b]);
-      ctx.moveTo(pa.x, pa.y);
-      ctx.lineTo(pb.x, pb.y);
+      const pa = toCanvasPoint(landmarks[a]), pb = toCanvasPoint(landmarks[b]);
+      ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
     });
     ctx.stroke();
     landmarks.forEach(lm => {
       const p = toCanvasPoint(lm);
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2); ctx.fill();
     });
   }
 
-  function cropHandleRadius() { return Math.max(26, Math.min(CANVAS_W, CANVAS_H) * 0.035); }
+  function cropHandleRadius() { return Math.max(24, Math.min(CANVAS_W, CANVAS_H) * 0.032); }
 
   function drawCropBox() {
     ctx.save();
-    // dim everything outside the crop box
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
     ctx.fillRect(0, 0, CANVAS_W, crop.y);
     ctx.fillRect(0, crop.y + crop.h, CANVAS_W, CANVAS_H - (crop.y + crop.h));
@@ -339,32 +343,50 @@
     ctx.lineWidth = 3;
     ctx.strokeRect(crop.x, crop.y, crop.w, crop.h);
 
-    // corner handles
     const r = cropHandleRadius();
-    const corners = [
-      [crop.x, crop.y], [crop.x + crop.w, crop.y],
-      [crop.x, crop.y + crop.h], [crop.x + crop.w, crop.y + crop.h]
-    ];
-    corners.forEach(([cx, cy]) => {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 0.4, 0, Math.PI * 2);
-      ctx.fillStyle = '#d9ff3a';
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(217,255,58,0.5)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    });
+    [[crop.x, crop.y], [crop.x + crop.w, crop.y], [crop.x, crop.y + crop.h], [crop.x + crop.w, crop.y + crop.h]]
+      .forEach(([cx, cy]) => {
+        ctx.beginPath(); ctx.arc(cx, cy, r * 0.4, 0, Math.PI * 2); ctx.fillStyle = '#d9ff3a'; ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(217,255,58,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+      });
     ctx.restore();
   }
 
-  function render(handLandmarks) {
+  function drawTwoHandTimer() {
+    if (!twoHandTimerActive) return;
+    const elapsed = performance.now() - twoHandTimerStart;
+    const remaining = Math.max(0, CROP_HOLD_MS - elapsed);
+    const progress = 1 - remaining / CROP_HOLD_MS;
+    const cx = CANVAS_W / 2, cy = Math.min(CANVAS_H * 0.16, 130);
+    const R = Math.max(28, Math.min(CANVAS_W, CANVAS_H) * 0.045);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+    ctx.strokeStyle = '#d9ff3a';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.round(R * 0.9)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(Math.ceil(remaining / 1000).toString(), cx, cy + 1);
+    ctx.restore();
+  }
+
+  function render() {
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
     if (phase === 'preview' || phase === 'crop') {
       drawCoverVideo(ctx);
-      if (phase === 'crop') drawCropBox();
+      if (phase === 'crop') { drawCropBox(); drawTwoHandTimer(); }
     } else {
       for (let pos = 0; pos < order.length; pos++) {
         const tileId = order[pos];
@@ -382,99 +404,97 @@
       }
       if (heldTile && cursor.visible) {
         const cw = crop.w / GRID, ch = crop.h / GRID;
-        const scale = 1.08;
-        const dw = cw * scale, dh = ch * scale;
+        const dw = cw * 1.08, dh = ch * 1.08;
         ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.6)';
-        ctx.shadowBlur = 18;
+        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 18;
         ctx.drawImage(tileCanvases[heldTile.tileId], cursor.x - dw / 2, cursor.y - dh / 2, dw, dh);
         ctx.restore();
       }
-      if (isSolved() && !solvedShown) {
-        solvedShown = true;
-        instructions.innerHTML = '🎉 Solved!';
-      }
+      if (isSolved() && !solvedShown) { solvedShown = true; instructions.innerHTML = '🎉 Solved!'; }
       if (isSolved()) {
         ctx.fillStyle = 'rgba(217,255,58,0.95)';
-        ctx.font = `bold ${Math.round(CANVAS_W * 0.045)}px sans-serif`;
+        ctx.font = `bold ${Math.round(CANVAS_W * 0.032)}px sans-serif`; // smaller than before
         ctx.textAlign = 'center';
-        ctx.fillText('SOLVED', CANVAS_W / 2, CANVAS_H * 0.12);
+        ctx.fillText('SOLVED', CANVAS_W / 2, CANVAS_H * 0.1);
       }
     }
 
-    if (handLandmarks) {
-      drawHandSkeleton(handLandmarks);
-      if (cursor.visible) {
-        ctx.beginPath();
-        ctx.arc(cursor.x, cursor.y, 11, 0, Math.PI * 2);
-        ctx.strokeStyle = (heldTile || cropGrab) ? '#d9ff3a' : 'rgba(255,255,255,0.85)';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-      }
+    cachedHands.forEach(h => drawHandSkeleton(h.landmarks));
+    if (cursor.visible && phase === 'puzzle') {
+      ctx.beginPath();
+      ctx.arc(cursor.x, cursor.y, 11, 0, Math.PI * 2);
+      ctx.strokeStyle = heldTile ? '#d9ff3a' : 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
     }
   }
 
-  function handlePinchLogic(landmarks) {
-    const thumbTip = toCanvasPoint(landmarks[4]);
-    const indexTip = toCanvasPoint(landmarks[8]);
-    const wrist = toCanvasPoint(landmarks[0]);
-    const midMcp = toCanvasPoint(landmarks[9]);
-    const handScale = Math.max(dist(wrist, midMcp), 20);
-    const pinchThreshold = handScale * 0.45;
+  // === interaction logic, run once per MediaPipe detection ===
 
-    const pinchDist = dist(thumbTip, indexTip);
-    const pinching = pinchDist < pinchThreshold;
+  function handleSingleHandCrop(hand) {
+    if (!hand) { prevPinching = false; cropGrab = null; return; }
+    const pinching = hand.pinching;
+    cursor.x = hand.pinchPoint.x; cursor.y = hand.pinchPoint.y; cursor.visible = true;
 
-    cursor.x = (thumbTip.x + indexTip.x) / 2;
-    cursor.y = (thumbTip.y + indexTip.y) / 2;
-    cursor.visible = true;
-
-    if (phase === 'crop') {
-      if (pinching && !prevPinching) {
-        // pinch just started -> figure out what we grabbed
-        const r = cropHandleRadius();
-        const corners = {
-          tl: { x: crop.x, y: crop.y },
-          tr: { x: crop.x + crop.w, y: crop.y },
-          bl: { x: crop.x, y: crop.y + crop.h },
-          br: { x: crop.x + crop.w, y: crop.y + crop.h }
-        };
-        let mode = null;
-        for (const key in corners) {
-          if (dist(cursor, corners[key]) < r) { mode = key; break; }
-        }
-        if (!mode && cursor.x > crop.x && cursor.x < crop.x + crop.w &&
-            cursor.y > crop.y && cursor.y < crop.y + crop.h) {
-          mode = 'move';
-        }
-        if (mode) {
-          cropGrab = { mode, startX: cursor.x, startY: cursor.y, orig: { ...crop } };
-        }
-      } else if (pinching && prevPinching && cropGrab) {
-        const dx = cursor.x - cropGrab.startX, dy = cursor.y - cropGrab.startY;
-        const o = cropGrab.orig;
-        switch (cropGrab.mode) {
-          case 'move': crop.x = o.x + dx; crop.y = o.y + dy; break;
-          case 'tl':   crop.x = o.x + dx; crop.y = o.y + dy; crop.w = o.w - dx; crop.h = o.h - dy; break;
-          case 'tr':   crop.y = o.y + dy; crop.w = o.w + dx; crop.h = o.h - dy; break;
-          case 'bl':   crop.x = o.x + dx; crop.w = o.w - dx; crop.h = o.h + dy; break;
-          case 'br':   crop.w = o.w + dx; crop.h = o.h + dy; break;
-        }
-        clampCrop();
-      } else if (!pinching && prevPinching) {
-        cropGrab = null;
+    if (pinching && !prevPinching) {
+      const r = cropHandleRadius();
+      const corners = {
+        tl: { x: crop.x, y: crop.y }, tr: { x: crop.x + crop.w, y: crop.y },
+        bl: { x: crop.x, y: crop.y + crop.h }, br: { x: crop.x + crop.w, y: crop.y + crop.h }
+      };
+      let mode = null;
+      for (const key in corners) { if (dist(cursor, corners[key]) < r) { mode = key; break; } }
+      if (!mode && cursor.x > crop.x && cursor.x < crop.x + crop.w && cursor.y > crop.y && cursor.y < crop.y + crop.h) {
+        mode = 'move';
       }
-      prevPinching = pinching;
+      if (mode) cropGrab = { mode, startX: cursor.x, startY: cursor.y, orig: { ...crop } };
+    } else if (pinching && prevPinching && cropGrab) {
+      const dx = cursor.x - cropGrab.startX, dy = cursor.y - cropGrab.startY;
+      const o = cropGrab.orig;
+      switch (cropGrab.mode) {
+        case 'move': crop.x = o.x + dx; crop.y = o.y + dy; break;
+        case 'tl':   crop.x = o.x + dx; crop.y = o.y + dy; crop.w = o.w - dx; crop.h = o.h - dy; break;
+        case 'tr':   crop.y = o.y + dy; crop.w = o.w + dx; crop.h = o.h - dy; break;
+        case 'bl':   crop.x = o.x + dx; crop.w = o.w - dx; crop.h = o.h + dy; break;
+        case 'br':   crop.w = o.w + dx; crop.h = o.h + dy; break;
+      }
+      clampCrop();
+    } else if (!pinching && prevPinching) {
+      cropGrab = null;
+    }
+    prevPinching = pinching;
+  }
+
+  function handleCropLogic(hands2) {
+    const twoHandMode = hands2.length >= 2 && hands2[0].pinching && hands2[1].pinching;
+
+    if (twoHandMode) {
+      cropGrab = null;
+      const p1 = hands2[0].pinchPoint, p2 = hands2[1].pinchPoint;
+      crop = { x: Math.min(p1.x, p2.x), y: Math.min(p1.y, p2.y), w: Math.abs(p1.x - p2.x), h: Math.abs(p1.y - p2.y) };
+      softClampCrop();
+
+      if (!twoHandTimerActive) { twoHandTimerActive = true; twoHandTimerStart = performance.now(); }
+      if (performance.now() - twoHandTimerStart >= CROP_HOLD_MS) {
+        clampCrop();
+        capturePhoto();
+      }
+      cursor.visible = false; // hide single-hand cursor dot while framing with both hands
       return;
     }
 
-    if (phase !== 'puzzle') { prevPinching = pinching; return; }
+    twoHandTimerActive = false;
+    handleSingleHandCrop(hands2[0] || null);
+  }
+
+  function handlePuzzleLogic(hand) {
+    if (!hand) { cursor.visible = false; prevPinching = false; return; }
+    cursor.x = hand.pinchPoint.x; cursor.y = hand.pinchPoint.y; cursor.visible = true;
+    const pinching = hand.pinching;
 
     if (pinching && !prevPinching) {
       const pos = gridPosAt(cursor.x, cursor.y);
-      if (pos !== -1 && !heldTile) {
-        heldTile = { tileId: order[pos], fromPos: pos };
-      }
+      if (pos !== -1 && !heldTile) heldTile = { tileId: order[pos], fromPos: pos };
     } else if (!pinching && prevPinching) {
       if (heldTile) {
         const dropPos = gridPosAt(cursor.x, cursor.y);
@@ -489,55 +509,41 @@
     prevPinching = pinching;
   }
 
-  // --- MediaPipe setup, throttled + downscaled for performance ---
-  const hands = new Hands({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-  });
+  // === MediaPipe setup ===
+  const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
   hands.setOptions({
-    maxNumHands: 1,
-    modelComplexity: 1,
+    maxNumHands: 2,
+    modelComplexity: 0,          // lite model: noticeably faster, plenty accurate for pinch detection
     minDetectionConfidence: 0.5,
     minTrackingConfidence: 0.6
   });
 
-  let frameCount = 0;
   hands.onResults((results) => {
-    let landmarks = null;
-    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-      landmarks = results.multiHandLandmarks[0];
-      handlePinchLogic(landmarks);
-    } else {
-      cursor.visible = false;
-      prevPinching = false;
-      cropGrab = null;
-    }
-    render(landmarks);
+    cachedHands = (results.multiHandLandmarks || []).map(processHand);
+    if (phase === 'crop') handleCropLogic(cachedHands);
+    else if (phase === 'puzzle') handlePuzzleLogic(cachedHands[0] || null);
   });
 
+  let frameCount = 0;
   const camera = new Camera(video, {
     onFrame: async () => {
-      if (phase !== 'puzzle') render(null); // keep live preview smooth every frame
-      if (++frameCount % 2 !== 0) return;
-      // draw UNMIRRORED into the small detect canvas — toCanvasPoint() applies
-      // the mirror flip itself, so this must stay raw to match it.
-      detectCtx.drawImage(video, 0, 0, DETECT_W, DETECT_H);
+      render(); // always redraw at full camera framerate, independent of detection speed
+      if (++frameCount % 2 !== 0) return; // throttle the actual (expensive) hand detection
+      detectCtx.drawImage(video, 0, 0, DETECT_W, DETECT_H); // unmirrored — toCanvasPoint() flips it
       await hands.send({ image: detectCanvas });
     },
-    width: 1280,
-    height: 960
+    width: 960,
+    height: 720
   });
 
   camera.start()
     .then(() => { instructions.textContent = 'Frame yourself, then capture.'; })
-    .catch((err) => {
-      instructions.textContent = 'Camera access failed: ' + err.message;
-    });
+    .catch((err) => { instructions.textContent = 'Camera access failed: ' + err.message; });
 
   window.addEventListener('resize', () => {
     const oldW = CANVAS_W, oldH = CANVAS_H;
     resizeCanvas();
     if (phase === 'crop' && oldW && oldH) {
-      // rescale the crop box proportionally so it doesn't jump around
       crop.x *= CANVAS_W / oldW; crop.w *= CANVAS_W / oldW;
       crop.y *= CANVAS_H / oldH; crop.h *= CANVAS_H / oldH;
       clampCrop();
