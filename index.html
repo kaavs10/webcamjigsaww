@@ -7,21 +7,13 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Ocean Jigsaw — Hand Tracking</title>
+  <title>Ocean Jigsaw 🫧</title>
 
 
   <style>
-
-    :root {
-      --blue-dark: #075985;
-      --blue-mid: #0e7490;
-      --blue-light: #dff7ff;
-      --white: #ffffff;
-    }
-
 
     * {
       box-sizing: border-box;
@@ -44,18 +36,30 @@
         BlinkMacSystemFont,
         "Segoe UI",
         Roboto,
+        Arial,
         sans-serif;
 
       background:
         linear-gradient(
           135deg,
-          #e8faff 0%,
-          #c8f1fb 45%,
-          #8bd8ee 100%
+          #e9fbff 0%,
+          #c8f2fb 45%,
+          #8bd9ed 100%
         );
 
     }
 
+
+    body {
+
+      position: relative;
+
+    }
+
+
+    /* =========================================
+       MAIN STAGE
+    ========================================= */
 
     #stage {
 
@@ -71,16 +75,31 @@
       background:
         linear-gradient(
           135deg,
-          #e8faff 0%,
-          #c8f1fb 45%,
-          #8bd8ee 100%
+          #e9fbff,
+          #c8f2fb,
+          #8bd9ed
+        );
+
+    }
+
+
+    #stage.puzzle-mode {
+
+      background:
+        linear-gradient(
+          135deg,
+          #e9fbff 0%,
+          #c5f1fb 50%,
+          #87d7ed 100%
         );
 
     }
 
 
     video {
+
       display: none;
+
     }
 
 
@@ -98,36 +117,6 @@
     }
 
 
-    /*
-      Ocean background during puzzle mode
-    */
-
-    #stage.puzzle-mode {
-
-      background:
-
-        radial-gradient(
-          circle at 15% 20%,
-          rgba(255,255,255,0.45),
-          transparent 23%
-        ),
-
-        radial-gradient(
-          circle at 85% 75%,
-          rgba(255,255,255,0.3),
-          transparent 28%
-        ),
-
-        linear-gradient(
-          135deg,
-          #e8faff 0%,
-          #bdeef9 45%,
-          #82d3eb 100%
-        );
-
-    }
-
-
     /* =========================================
        TOP BAR
     ========================================= */
@@ -140,23 +129,23 @@
       left: 0;
       right: 0;
 
+      z-index: 20;
+
       padding:
-        max(14px, env(safe-area-inset-top))
         16px
+        20px
         10px;
 
       text-align: center;
 
+      pointer-events: none;
+
       background:
         linear-gradient(
           to bottom,
-          rgba(255,255,255,0.65),
-          transparent
+          rgba(255,255,255,0.75),
+          rgba(255,255,255,0)
         );
-
-      z-index: 10;
-
-      pointer-events: none;
 
     }
 
@@ -165,16 +154,13 @@
 
       margin: 0 0 4px;
 
-      font-size: 0.95rem;
+      color: #075985;
+
+      font-size: 1rem;
 
       letter-spacing: 0.16em;
 
       text-transform: uppercase;
-
-      color: var(--blue-dark);
-
-      text-shadow:
-        0 1px 2px rgba(255,255,255,0.8);
 
     }
 
@@ -183,13 +169,11 @@
 
       margin: 0 auto;
 
-      max-width: 520px;
-
       color: #164e63;
 
       font-size: 0.78rem;
 
-      font-weight: 500;
+      max-width: 550px;
 
     }
 
@@ -202,34 +186,36 @@
 
       position: fixed;
 
-      top:
-        max(14px, env(safe-area-inset-top));
+      top: 18px;
+      right: 20px;
 
-      right: 16px;
-
-      z-index: 11;
+      z-index: 30;
 
       display: none;
 
-      color: var(--blue-dark);
-
-      font-weight: 700;
-
-      font-size: 1rem;
-
-      letter-spacing: 0.05em;
-
-      font-variant-numeric: tabular-nums;
-
-      padding: 8px 14px;
+      padding:
+        9px
+        15px;
 
       border-radius: 999px;
 
       background:
-        rgba(255,255,255,0.72);
+        rgba(255,255,255,0.82);
+
+      color: #075985;
+
+      font-size: 1rem;
+
+      font-weight: 800;
+
+      letter-spacing: 0.04em;
+
+      font-variant-numeric:
+        tabular-nums;
 
       box-shadow:
-        0 4px 18px rgba(7,89,133,0.15);
+        0 5px 20px
+        rgba(7,89,133,0.15);
 
       backdrop-filter:
         blur(10px);
@@ -238,26 +224,27 @@
 
 
     /* =========================================
-       BUTTONS
+       BUTTON BAR
     ========================================= */
 
     .bottom-bar {
 
       position: fixed;
 
-      bottom:
-        max(20px, env(safe-area-inset-bottom));
-
       left: 0;
       right: 0;
+
+      bottom: 22px;
+
+      z-index: 30;
 
       display: flex;
 
       justify-content: center;
 
-      gap: 10px;
+      align-items: center;
 
-      z-index: 10;
+      gap: 10px;
 
     }
 
@@ -266,28 +253,26 @@
 
       border: none;
 
-      padding: 13px 24px;
+      padding:
+        13px
+        23px;
 
       border-radius: 999px;
 
       background:
-        rgba(255,255,255,0.92);
+        rgba(255,255,255,0.94);
 
-      color: var(--blue-dark);
-
-      font-weight: 700;
+      color: #075985;
 
       font-size: 0.9rem;
 
+      font-weight: 750;
+
       cursor: pointer;
 
-      letter-spacing: 0.02em;
-
       box-shadow:
-        0 5px 18px rgba(7,89,133,0.18);
-
-      backdrop-filter:
-        blur(10px);
+        0 6px 20px
+        rgba(7,89,133,0.18);
 
       transition:
         transform 0.15s ease,
@@ -302,7 +287,8 @@
         translateY(-2px);
 
       box-shadow:
-        0 8px 22px rgba(7,89,133,0.23);
+        0 9px 25px
+        rgba(7,89,133,0.23);
 
     }
 
@@ -318,12 +304,11 @@
     button.secondary {
 
       background:
-        rgba(255,255,255,0.5);
-
-      color: var(--blue-dark);
+        rgba(255,255,255,0.55);
 
       border:
-        1.5px solid rgba(7,89,133,0.35);
+        1px solid
+        rgba(7,89,133,0.3);
 
     }
 
@@ -336,6 +321,274 @@
 
     }
 
+
+    /* =========================================
+       START / RESULT POPUP
+    ========================================= */
+
+    .modal {
+
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 100;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      padding: 20px;
+
+      background:
+        rgba(7,89,133,0.25);
+
+      backdrop-filter:
+        blur(12px);
+
+    }
+
+
+    .card {
+
+      width:
+        min(400px, 92vw);
+
+      padding:
+        32px 28px;
+
+      border-radius: 28px;
+
+      text-align: center;
+
+      background:
+        rgba(255,255,255,0.95);
+
+      box-shadow:
+        0 25px 70px
+        rgba(7,89,133,0.25);
+
+    }
+
+
+    .card-icon {
+
+      font-size: 2.8rem;
+
+      margin-bottom: 8px;
+
+    }
+
+
+    .card h2 {
+
+      margin:
+        0 0 8px;
+
+      color: #075985;
+
+      font-size: 1.6rem;
+
+    }
+
+
+    .card p {
+
+      color: #164e63;
+
+      font-size: 0.9rem;
+
+      line-height: 1.5;
+
+    }
+
+
+    #playerName {
+
+      width: 100%;
+
+      padding:
+        13px 16px;
+
+      margin:
+        8px 0 12px;
+
+      border-radius: 14px;
+
+      border:
+        1.5px solid
+        rgba(7,89,133,0.25);
+
+      outline: none;
+
+      background:
+        #e8faff;
+
+      color: #075985;
+
+      font-size: 1rem;
+
+      text-align: center;
+
+    }
+
+
+    #playerName:focus {
+
+      border-color:
+        #38a8ca;
+
+      box-shadow:
+        0 0 0 3px
+        rgba(56,168,202,0.15);
+
+    }
+
+
+    #startGame {
+
+      width: 100%;
+
+    }
+
+
+    /* =========================================
+       SCOREBOARD
+    ========================================= */
+
+    .scoreboard {
+
+      position: fixed;
+
+      top: 70px;
+
+      left: 16px;
+
+      z-index: 25;
+
+      width:
+        min(270px, 38vw);
+
+      max-height: 45vh;
+
+      overflow-y: auto;
+
+      padding:
+        14px;
+
+      border-radius: 20px;
+
+      background:
+        rgba(255,255,255,0.68);
+
+      border:
+        1px solid
+        rgba(255,255,255,0.85);
+
+      box-shadow:
+        0 8px 28px
+        rgba(7,89,133,0.12);
+
+      backdrop-filter:
+        blur(12px);
+
+      color: #075985;
+
+    }
+
+
+    .score-title {
+
+      margin-bottom: 8px;
+
+      font-size: 0.88rem;
+
+      font-weight: 800;
+
+    }
+
+
+    .score-row {
+
+      display: grid;
+
+      grid-template-columns:
+        25px 1fr auto;
+
+      gap: 7px;
+
+      align-items: center;
+
+      padding:
+        7px 0;
+
+      border-bottom:
+        1px solid
+        rgba(7,89,133,0.08);
+
+      font-size: 0.75rem;
+
+    }
+
+
+    .score-row:last-child {
+
+      border-bottom: none;
+
+    }
+
+
+    .score-name {
+
+      overflow: hidden;
+
+      text-overflow: ellipsis;
+
+      white-space: nowrap;
+
+      font-weight: 700;
+
+    }
+
+
+    .score-time {
+
+      font-weight: 800;
+
+      font-variant-numeric:
+        tabular-nums;
+
+    }
+
+
+    .score-date {
+
+      grid-column:
+        2 / 4;
+
+      font-size: 0.62rem;
+
+      opacity: 0.55;
+
+    }
+
+
+    @media(max-width:700px) {
+
+      .scoreboard {
+
+        width: 185px;
+
+        left: 8px;
+
+        top: 65px;
+
+      }
+
+    }
+
   </style>
 
 </head>
@@ -345,7 +598,7 @@
 
 
   <!-- =========================================
-       UI
+       TOP BAR
   ========================================== -->
 
   <div class="top-bar">
@@ -361,13 +614,41 @@
   </div>
 
 
+  <!-- =========================================
+       TIMER
+  ========================================== -->
+
   <div
     class="timer"
     id="timer"
   >
-    00:00
+    01:00
   </div>
 
+
+  <!-- =========================================
+       SCOREBOARD
+  ========================================== -->
+
+  <div
+    class="scoreboard"
+    id="scoreboard"
+  >
+
+    <div class="score-title">
+      🏆 Scoreboard
+    </div>
+
+    <div id="scoreList">
+      No scores yet.
+    </div>
+
+  </div>
+
+
+  <!-- =========================================
+       GAME STAGE
+  ========================================== -->
 
   <div id="stage">
 
@@ -378,26 +659,34 @@
       playsinline
     ></video>
 
-    <canvas id="canvas"></canvas>
+    <canvas
+      id="canvas"
+    ></canvas>
 
   </div>
 
 
-  <!-- Capture -->
+  <!-- =========================================
+       CAPTURE BUTTON
+  ========================================== -->
 
   <div
     class="bottom-bar"
-    id="captureBtnWrap"
+    id="captureControls"
   >
 
-    <button id="captureBtn">
+    <button
+      id="captureBtn"
+    >
       📸 Capture Photo
     </button>
 
   </div>
 
 
-  <!-- Crop -->
+  <!-- =========================================
+       CROP BUTTONS
+  ========================================== -->
 
   <div
     class="bottom-bar"
@@ -405,13 +694,15 @@
     style="display:none;"
   >
 
-    <button id="confirmCropBtn">
+    <button
+      id="confirmCrop"
+    >
       ✅ Confirm Crop
     </button>
 
     <button
       class="secondary"
-      id="cancelCropBtn"
+      id="cancelCrop"
     >
       ✕ Cancel
     </button>
@@ -419,19 +710,25 @@
   </div>
 
 
-  <!-- Puzzle -->
+  <!-- =========================================
+       PUZZLE BUTTONS
+  ========================================== -->
 
   <div
     class="bottom-bar"
-    id="postControls"
+    id="puzzleControls"
     style="display:none;"
   >
 
-    <button id="undoBtn">
+    <button
+      id="undoBtn"
+    >
       ↩ Undo
     </button>
 
-    <button id="shuffleBtn">
+    <button
+      id="shuffleBtn"
+    >
       🔀 Shuffle
     </button>
 
@@ -446,129 +743,344 @@
 
 
   <!-- =========================================
-       EVERYTHING BELOW IS JAVASCRIPT
+       NAME POPUP
+  ========================================== -->
+
+  <div
+    class="modal"
+    id="nameModal"
+  >
+
+    <div class="card">
+
+      <div class="card-icon">
+        🫧
+      </div>
+
+      <h2>
+        Ocean Jigsaw
+      </h2>
+
+      <p>
+        Enter your name to start the game.
+      </p>
+
+      <input
+        id="playerName"
+        type="text"
+        maxlength="20"
+        placeholder="Your name"
+        autocomplete="off"
+      >
+
+      <button
+        id="startGame"
+      >
+        🌊 Start Game
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================
+       RESULT POPUP
+  ========================================== -->
+
+  <div
+    class="modal"
+    id="resultModal"
+    style="display:none;"
+  >
+
+    <div class="card">
+
+      <div
+        class="card-icon"
+        id="resultIcon"
+      >
+        🎉
+      </div>
+
+      <h2 id="resultTitle">
+        you've won a prize
+      </h2>
+
+      <p id="resultDetails">
+      </p>
+
+      <p>
+        A new game will automatically
+        restart after 3 minutes.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================
+       JAVASCRIPT
   ========================================== -->
 
   <script type="module">
 
-    /*
-      IMPORTANT:
 
-      We are importing MediaPipe as an ES module.
-
-      This fixes the problem where:
-
-      window.FilesetResolver
-      window.HandLandmarker
-
-      were undefined.
-    */
+    /* =========================================
+       MEDIAPIPE IMPORT
+    ========================================== */
 
     import {
+
       HandLandmarker,
+
       FilesetResolver
+
     }
 
     from
+
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm";
 
 
     /* =========================================
        ELEMENTS
-    ========================================= */
+    ========================================== */
 
     const video =
-      document.getElementById("video");
+      document.getElementById(
+        "video"
+      );
 
 
     const canvas =
-      document.getElementById("canvas");
+      document.getElementById(
+        "canvas"
+      );
 
 
     const ctx =
-      canvas.getContext("2d");
+      canvas.getContext(
+        "2d"
+      );
 
 
     const stage =
-      document.getElementById("stage");
+      document.getElementById(
+        "stage"
+      );
 
 
     const instructions =
-      document.getElementById("instructions");
+      document.getElementById(
+        "instructions"
+      );
 
 
-    const timerEl =
-      document.getElementById("timer");
+    const timer =
+      document.getElementById(
+        "timer"
+      );
 
 
-    const captureBtn =
-      document.getElementById("captureBtn");
-
-
-    const captureBtnWrap =
-      document.getElementById("captureBtnWrap");
+    const captureControls =
+      document.getElementById(
+        "captureControls"
+      );
 
 
     const cropControls =
-      document.getElementById("cropControls");
+      document.getElementById(
+        "cropControls"
+      );
 
 
-    const confirmCropBtn =
-      document.getElementById("confirmCropBtn");
+    const puzzleControls =
+      document.getElementById(
+        "puzzleControls"
+      );
 
 
-    const cancelCropBtn =
-      document.getElementById("cancelCropBtn");
+    const captureBtn =
+      document.getElementById(
+        "captureBtn"
+      );
 
 
-    const postControls =
-      document.getElementById("postControls");
+    const confirmCrop =
+      document.getElementById(
+        "confirmCrop"
+      );
 
 
-    const shuffleBtn =
-      document.getElementById("shuffleBtn");
+    const cancelCrop =
+      document.getElementById(
+        "cancelCrop"
+      );
 
 
     const undoBtn =
-      document.getElementById("undoBtn");
+      document.getElementById(
+        "undoBtn"
+      );
+
+
+    const shuffleBtn =
+      document.getElementById(
+        "shuffleBtn"
+      );
 
 
     const retakeBtn =
-      document.getElementById("retakeBtn");
+      document.getElementById(
+        "retakeBtn"
+      );
+
+
+    const nameModal =
+      document.getElementById(
+        "nameModal"
+      );
+
+
+    const playerNameInput =
+      document.getElementById(
+        "playerName"
+      );
+
+
+    const startGame =
+      document.getElementById(
+        "startGame"
+      );
+
+
+    const resultModal =
+      document.getElementById(
+        "resultModal"
+      );
+
+
+    const resultIcon =
+      document.getElementById(
+        "resultIcon"
+      );
+
+
+    const resultTitle =
+      document.getElementById(
+        "resultTitle"
+      );
+
+
+    const resultDetails =
+      document.getElementById(
+        "resultDetails"
+      );
+
+
+    const scoreList =
+      document.getElementById(
+        "scoreList"
+      );
 
 
     /* =========================================
        SETTINGS
-    ========================================= */
+    ========================================== */
 
-    const GRID = 3;
+    const GRID =
+      3;
 
-    const CROP_HOLD_MS = 5000;
+
+    const ROUND_TIME =
+      60 * 1000;
+
+
+    const AUTO_RESTART =
+      3 * 60 * 1000;
 
 
     /* =========================================
-       CANVAS
-    ========================================= */
+       GAME STATE
+    ========================================== */
 
-    let CANVAS_W = 0;
+    let phase =
+      "preview";
 
-    let CANVAS_H = 0;
+
+    let playerName =
+      localStorage.getItem(
+        "oceanJigsawPlayerName"
+      ) || "";
+
+
+    let tileCanvases =
+      [];
+
+
+    let order =
+      [];
+
+
+    let heldTile =
+      null;
+
+
+    let moveHistory =
+      [];
+
+
+    let solvedShown =
+      false;
+
+
+    let resultShown =
+      false;
+
+
+    let roundStarted =
+      false;
+
+
+    let timerStart =
+      0;
+
+
+    let timerInterval =
+      null;
+
+
+    let restartTimeout =
+      null;
+
+
+    /* =========================================
+       CANVAS SIZE
+    ========================================== */
+
+    let W =
+      window.innerWidth;
+
+
+    let H =
+      window.innerHeight;
 
 
     function resizeCanvas() {
 
-      CANVAS_W =
+      W =
         window.innerWidth;
 
-      CANVAS_H =
+      H =
         window.innerHeight;
 
-
       canvas.width =
-        CANVAS_W;
+        W;
 
       canvas.height =
-        CANVAS_H;
+        H;
 
     }
 
@@ -577,54 +1089,8 @@
 
 
     /* =========================================
-       GAME STATE
-    ========================================= */
-
-    let phase = "preview";
-
-
-    let tileCanvases = [];
-
-
-    let order = [];
-
-
-    let heldTile = null;
-
-
-    let cursor = {
-
-      x: 0,
-
-      y: 0,
-
-      visible: false
-
-    };
-
-
-    let prevPinching = false;
-
-
-    let solvedShown = false;
-
-
-    /* =========================================
-       TIMER
-    ========================================= */
-
-    let moveHistory = [];
-
-
-    let timerStart = 0;
-
-
-    let timerInterval = null;
-
-
-    /* =========================================
        CROP
-    ========================================= */
+    ========================================== */
 
     let crop = {
 
@@ -639,472 +1105,39 @@
     };
 
 
-    let cropGrab = null;
+    let cropGrab =
+      null;
 
 
-    let twoHandTimerActive = false;
+    let previousPinch =
+      false;
 
 
-    let twoHandTimerStart = 0;
+    let twoHandTimer =
+      false;
 
 
-    /* =========================================
-       HAND TRACKING STATE
-    ========================================= */
+    let twoHandStart =
+      0;
 
-    let handLandmarker = null;
 
+    const CROP_HOLD =
+      5000;
 
-    let cachedHands = [];
-
-
-    let detectBusy = false;
-
-
-    let frameCount = 0;
-
-
-    let lastVideoTime = -1;
-
-
-    let modelReady = false;
-
-
-    /* =========================================
-       BUBBLES 🫧
-    ========================================= */
-
-    const bubbles = [];
-
-
-    function initBubbles() {
-
-      bubbles.length = 0;
-
-
-      const count =
-        Math.min(
-          42,
-          Math.floor(
-            Math.min(
-              CANVAS_W,
-              CANVAS_H
-            ) / 18
-          )
-        );
-
-
-      for (
-        let i = 0;
-        i < count;
-        i++
-      ) {
-
-        bubbles.push({
-
-          x:
-            Math.random() *
-            CANVAS_W,
-
-          y:
-            Math.random() *
-            CANVAS_H,
-
-          r:
-            5 +
-            Math.random() *
-            25,
-
-          speed:
-            0.25 +
-            Math.random() *
-            0.8,
-
-          wobble:
-            Math.random() *
-            Math.PI *
-            2,
-
-          wobbleSpeed:
-            0.01 +
-            Math.random() *
-            0.025,
-
-          alpha:
-            0.12 +
-            Math.random() *
-            0.25
-
-        });
-
-      }
-
-    }
-
-
-    function drawBubbles() {
-
-      for (
-        const b of bubbles
-      ) {
-
-        b.y -= b.speed;
-
-        b.wobble +=
-          b.wobbleSpeed;
-
-
-        const bx =
-          b.x +
-          Math.sin(
-            b.wobble
-          ) * 14;
-
-
-        if (
-          b.y <
-          -b.r * 2
-        ) {
-
-          b.y =
-            CANVAS_H +
-            b.r * 2;
-
-          b.x =
-            Math.random() *
-            CANVAS_W;
-
-        }
-
-
-        /*
-          Bubble
-        */
-
-        ctx.beginPath();
-
-        ctx.arc(
-          bx,
-          b.y,
-          b.r,
-          0,
-          Math.PI * 2
-        );
-
-
-        ctx.fillStyle =
-          `rgba(
-            255,
-            255,
-            255,
-            ${b.alpha * 0.55}
-          )`;
-
-
-        ctx.fill();
-
-
-        /*
-          Bubble outline
-        */
-
-        ctx.strokeStyle =
-          `rgba(
-            255,
-            255,
-            255,
-            ${Math.min(
-              0.55,
-              b.alpha * 1.4
-            )}
-          )`;
-
-
-        ctx.lineWidth =
-          1.2;
-
-
-        ctx.stroke();
-
-
-        /*
-          Little reflection
-        */
-
-        ctx.beginPath();
-
-        ctx.arc(
-          bx - b.r * 0.3,
-          b.y - b.r * 0.3,
-          b.r * 0.25,
-          0,
-          Math.PI * 2
-        );
-
-
-        ctx.fillStyle =
-          `rgba(
-            255,
-            255,
-            255,
-            ${Math.min(
-              0.75,
-              b.alpha * 1.2
-            )}
-          )`;
-
-
-        ctx.fill();
-
-      }
-
-    }
-
-
-    initBubbles();
-
-
-    /* =========================================
-       CAMERA → CANVAS TRANSFORM
-    ========================================= */
-
-    function getCoverTransform() {
-
-      const vw =
-        video.videoWidth || 640;
-
-
-      const vh =
-        video.videoHeight || 480;
-
-
-      const scale =
-        Math.max(
-          CANVAS_W / vw,
-          CANVAS_H / vh
-        );
-
-
-      const drawW =
-        vw * scale;
-
-
-      const drawH =
-        vh * scale;
-
-
-      return {
-
-        vw,
-
-        vh,
-
-        scale,
-
-        drawW,
-
-        drawH,
-
-        offsetX:
-          (CANVAS_W -
-            drawW) / 2,
-
-        offsetY:
-          (CANVAS_H -
-            drawH) / 2
-
-      };
-
-    }
-
-
-    function drawCoverVideo(
-      targetCtx
-    ) {
-
-      const t =
-        getCoverTransform();
-
-
-      targetCtx.drawImage(
-
-        video,
-
-        t.offsetX,
-
-        t.offsetY,
-
-        t.drawW,
-
-        t.drawH
-
-      );
-
-    }
-
-
-    /*
-      Convert MediaPipe normalized
-      coordinates into canvas pixels.
-    */
-
-    function toCanvasPoint(
-      landmark
-    ) {
-
-      const t =
-        getCoverTransform();
-
-
-      return {
-
-        x:
-          t.offsetX +
-          landmark.x *
-          t.vw *
-          t.scale,
-
-        y:
-          t.offsetY +
-          landmark.y *
-          t.vh *
-          t.scale
-
-      };
-
-    }
-
-
-    function dist(a, b) {
-
-      return Math.hypot(
-
-        a.x - b.x,
-
-        a.y - b.y
-
-      );
-
-    }
-
-
-    /* =========================================
-       PROCESS HAND
-    ========================================= */
-
-    function processHand(
-      landmarks
-    ) {
-
-      const thumbTip =
-        toCanvasPoint(
-          landmarks[4]
-        );
-
-
-      const indexTip =
-        toCanvasPoint(
-          landmarks[8]
-        );
-
-
-      const wrist =
-        toCanvasPoint(
-          landmarks[0]
-        );
-
-
-      const middleMcp =
-        toCanvasPoint(
-          landmarks[9]
-        );
-
-
-      const handScale =
-        Math.max(
-
-          dist(
-            wrist,
-            middleMcp
-          ),
-
-          20
-
-        );
-
-
-      /*
-        Pinch detection.
-
-        0.60 is intentionally
-        forgiving for webcams.
-      */
-
-      const pinching =
-        dist(
-          thumbTip,
-          indexTip
-        ) <
-        handScale * 0.60;
-
-
-      return {
-
-        landmarks,
-
-        thumbTip,
-
-        indexTip,
-
-        wrist,
-
-        middleMcp,
-
-        pinching,
-
-        pinchPoint: {
-
-          x:
-            (
-              thumbTip.x +
-              indexTip.x
-            ) / 2,
-
-          y:
-            (
-              thumbTip.y +
-              indexTip.y
-            ) / 2
-
-        }
-
-      };
-
-    }
-
-
-    /* =========================================
-       CROP
-    ========================================= */
 
     function defaultCrop() {
 
       const size =
-        Math.min(
-          CANVAS_W,
-          CANVAS_H
-        ) * 0.82;
+        Math.min(W, H) * 0.82;
 
 
       crop = {
 
         x:
-          (CANVAS_W -
-            size) / 2,
+          (W - size) / 2,
 
         y:
-          (CANVAS_H -
-            size) / 2,
+          (H - size) / 2,
 
         w:
           size,
@@ -1119,814 +1152,444 @@
 
     function clampCrop() {
 
-      const min =
-        Math.min(
-          CANVAS_W,
-          CANVAS_H
-        ) * 0.18;
+      const minSize =
+        Math.min(W, H) * 0.18;
 
 
-      if (
-        crop.w < min
-      )
-        crop.w = min;
-
-
-      if (
-        crop.h < min
-      )
-        crop.h = min;
-
-
-      if (
-        crop.w >
-        CANVAS_W
-      )
-        crop.w =
-          CANVAS_W;
-
-
-      if (
-        crop.h >
-        CANVAS_H
-      )
-        crop.h =
-          CANVAS_H;
-
-
-      if (
-        crop.x < 0
-      )
-        crop.x = 0;
-
-
-      if (
-        crop.y < 0
-      )
-        crop.y = 0;
-
-
-      if (
-        crop.x +
-        crop.w >
-        CANVAS_W
-      ) {
-
-        crop.x =
-          CANVAS_W -
-          crop.w;
-
-      }
-
-
-      if (
-        crop.y +
-        crop.h >
-        CANVAS_H
-      ) {
-
-        crop.y =
-          CANVAS_H -
-          crop.h;
-
-      }
-
-    }
-
-
-    function softClampCrop() {
-
-      if (
-        crop.x < 0
-      ) {
-
-        crop.w +=
-          crop.x;
-
-        crop.x = 0;
-
-      }
-
-
-      if (
-        crop.y < 0
-      ) {
-
-        crop.h +=
-          crop.y;
-
-        crop.y = 0;
-
-      }
-
-
-      if (
-        crop.x +
-        crop.w >
-        CANVAS_W
-      ) {
-
-        crop.w =
-          CANVAS_W -
-          crop.x;
-
-      }
-
-
-      if (
-        crop.y +
-        crop.h >
-        CANVAS_H
-      ) {
-
-        crop.h =
-          CANVAS_H -
-          crop.y;
-
-      }
-
-
-      if (
-        crop.w < 10
-      )
-        crop.w = 10;
-
-
-      if (
-        crop.h < 10
-      )
-        crop.h = 10;
-
-    }
-
-
-    function cellRect(
-      gridPos
-    ) {
-
-      const col =
-        gridPos % GRID;
-
-
-      const row =
-        Math.floor(
-          gridPos / GRID
+      crop.w =
+        Math.max(
+          minSize,
+          Math.min(
+            crop.w,
+            W
+          )
         );
 
 
-      const cw =
-        crop.w / GRID;
+      crop.h =
+        Math.max(
+          minSize,
+          Math.min(
+            crop.h,
+            H
+          )
+        );
 
 
-      const ch =
-        crop.h / GRID;
+      crop.x =
+        Math.max(
+          0,
+          Math.min(
+            crop.x,
+            W - crop.w
+          )
+        );
+
+
+      crop.y =
+        Math.max(
+          0,
+          Math.min(
+            crop.y,
+            H - crop.h
+          )
+        );
+
+    }
+
+
+    /* =========================================
+       BUBBLES
+    ========================================== */
+
+    const bubbles =
+      [];
+
+
+    function createBubbles() {
+
+      bubbles.length =
+        0;
+
+
+      const amount =
+        Math.min(
+          40,
+          Math.floor(
+            W / 28
+          )
+        );
+
+
+      for (
+        let i = 0;
+        i < amount;
+        i++
+      ) {
+
+        bubbles.push({
+
+          x:
+            Math.random() * W,
+
+          y:
+            Math.random() * H,
+
+          r:
+            5 +
+            Math.random() * 23,
+
+          speed:
+            0.25 +
+            Math.random() * 0.8,
+
+          wobble:
+            Math.random() * Math.PI * 2,
+
+          alpha:
+            0.12 +
+            Math.random() * 0.25
+
+        });
+
+      }
+
+    }
+
+
+    createBubbles();
+
+
+    function drawBubbles() {
+
+      for (
+        const b of bubbles
+      ) {
+
+        b.y -=
+          b.speed;
+
+
+        b.wobble +=
+          0.015;
+
+
+        const x =
+          b.x +
+          Math.sin(
+            b.wobble
+          ) * 12;
+
+
+        if (
+          b.y <
+          -b.r * 2
+        ) {
+
+          b.y =
+            H +
+            b.r * 2;
+
+        }
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+          x,
+          b.y,
+          b.r,
+          0,
+          Math.PI * 2
+        );
+
+
+        ctx.fillStyle =
+          `rgba(
+            255,
+            255,
+            255,
+            ${b.alpha * 0.5}
+          )`;
+
+
+        ctx.fill();
+
+
+        ctx.strokeStyle =
+          `rgba(
+            255,
+            255,
+            255,
+            ${b.alpha}
+          )`;
+
+
+        ctx.lineWidth =
+          1.2;
+
+
+        ctx.stroke();
+
+      }
+
+    }
+
+
+    /* =========================================
+       CAMERA TRANSFORM
+    ========================================== */
+
+    function getTransform() {
+
+      const vw =
+        video.videoWidth ||
+        640;
+
+
+      const vh =
+        video.videoHeight ||
+        480;
+
+
+      const scale =
+        Math.max(
+          W / vw,
+          H / vh
+        );
+
+
+      const dw =
+        vw * scale;
+
+
+      const dh =
+        vh * scale;
 
 
       return {
 
-        x:
-          crop.x +
-          col * cw,
+        vw,
 
-        y:
-          crop.y +
-          row * ch,
+        vh,
 
-        w:
-          cw,
+        scale,
 
-        h:
-          ch
+        dw,
+
+        dh,
+
+        ox:
+          (W - dw) / 2,
+
+        oy:
+          (H - dh) / 2
 
       };
 
     }
 
 
-    function gridPosAt(
-      x,
-      y
+    /* =========================================
+       MIRRORED CAMERA
+    ========================================== */
+
+    function drawCamera(
+      target
     ) {
 
-      if (
-
-        x < crop.x ||
-
-        y < crop.y ||
-
-        x >=
-          crop.x +
-          crop.w ||
-
-        y >=
-          crop.y +
-          crop.h
-
-      ) {
-
-        return -1;
-
-      }
+      const t =
+        getTransform();
 
 
-      const col =
-        Math.floor(
+      /*
+        THIS is the lateral
+        inversion fix.
 
-          (x - crop.x) /
-          (crop.w / GRID)
+        The video itself is mirrored.
+      */
 
-        );
-
-
-      const row =
-        Math.floor(
-
-          (y - crop.y) /
-          (crop.h / GRID)
-
-        );
+      target.save();
 
 
-      return (
-        row * GRID +
-        col
+      target.translate(
+        W,
+        0
+      );
+
+
+      target.scale(
+        -1,
+        1
+      );
+
+
+      target.drawImage(
+
+        video,
+
+        t.ox,
+
+        t.oy,
+
+        t.dw,
+
+        t.dh
+
+      );
+
+
+      target.restore();
+
+    }
+
+
+    /* =========================================
+       MIRRORED HAND COORDINATES
+    ========================================== */
+
+    function landmarkToCanvas(
+      landmark
+    ) {
+
+      const t =
+        getTransform();
+
+
+      /*
+        MediaPipe's original
+        X coordinate is reversed
+        because our camera is
+        mirrored.
+
+        (1 - x) fixes this.
+      */
+
+      return {
+
+        x:
+          t.ox +
+          (1 - landmark.x) *
+          t.vw *
+          t.scale,
+
+        y:
+          t.oy +
+          landmark.y *
+          t.vh *
+          t.scale
+
+      };
+
+    }
+
+
+    function distance(
+      a,
+      b
+    ) {
+
+      return Math.hypot(
+
+        a.x - b.x,
+
+        a.y - b.y
+
       );
 
     }
 
 
     /* =========================================
-       CREATE PUZZLE TILES
-    ========================================= */
+       PROCESS HAND
+    ========================================== */
 
-    function sliceIntoTiles(
-      sourceCanvas
+    function processHand(
+      landmarks
     ) {
 
-      tileCanvases = [];
-
-
-      const cw =
-        crop.w / GRID;
-
-
-      const ch =
-        crop.h / GRID;
-
-
-      for (
-        let i = 0;
-        i < GRID * GRID;
-        i++
-      ) {
-
-        const col =
-          i % GRID;
-
-
-        const row =
-          Math.floor(
-            i / GRID
-          );
-
-
-        const tile =
-          document.createElement(
-            "canvas"
-          );
-
-
-        tile.width =
-          cw;
-
-
-        tile.height =
-          ch;
-
-
-        const tileCtx =
-          tile.getContext(
-            "2d"
-          );
-
-
-        tileCtx.drawImage(
-
-          sourceCanvas,
-
-          crop.x +
-            col * cw,
-
-          crop.y +
-            row * ch,
-
-          cw,
-
-          ch,
-
-          0,
-
-          0,
-
-          cw,
-
-          ch
-
+      const thumb =
+        landmarkToCanvas(
+          landmarks[4]
         );
 
 
-        tileCanvases.push(
-          tile
+      const index =
+        landmarkToCanvas(
+          landmarks[8]
         );
 
-      }
 
-    }
-
-
-    /* =========================================
-       SHUFFLE
-    ========================================= */
-
-    function shuffle() {
-
-      order =
-        [
-          ...Array(
-            GRID * GRID
-          ).keys()
-        ];
+      const wrist =
+        landmarkToCanvas(
+          landmarks[0]
+        );
 
 
-      do {
-
-        for (
-          let i =
-            order.length - 1;
-
-          i > 0;
-
-          i--
-        ) {
-
-          const j =
-            Math.floor(
-              Math.random() *
-              (i + 1)
-            );
+      const middle =
+        landmarkToCanvas(
+          landmarks[9]
+        );
 
 
-          [
-            order[i],
-            order[j]
-          ] =
-          [
-            order[j],
-            order[i]
-          ];
+      const scale =
+        Math.max(
+          distance(
+            wrist,
+            middle
+          ),
+          20
+        );
+
+
+      /*
+        Pinch is detected when
+        thumb + index are close.
+      */
+
+      const pinching =
+        distance(
+          thumb,
+          index
+        ) <
+        scale * 0.60;
+
+
+      return {
+
+        landmarks,
+
+        thumb,
+
+        index,
+
+        wrist,
+
+        pinching,
+
+        pinchPoint: {
+
+          x:
+            (thumb.x +
+             index.x) / 2,
+
+          y:
+            (thumb.y +
+             index.y) / 2
 
         }
 
-      }
-
-      while (
-        isSolved()
-      );
-
-
-      heldTile =
-        null;
-
-
-      solvedShown =
-        false;
-
-
-      moveHistory =
-        [];
-
-
-      updateUndoBtn();
-
-    }
-
-
-    function isSolved() {
-
-      return order.every(
-        (
-          value,
-          index
-        ) =>
-          value === index
-      );
+      };
 
     }
 
 
     /* =========================================
-       TIMER
-    ========================================= */
+       DRAW HAND
+    ========================================== */
 
-    function startTimer() {
-
-      stopTimer();
-
-
-      timerStart =
-        Date.now();
-
-
-      timerEl.style.display =
-        "block";
-
-
-      timerInterval =
-        setInterval(
-          updateTimer,
-          250
-        );
-
-
-      updateTimer();
-
-    }
-
-
-    function stopTimer() {
-
-      if (
-        timerInterval
-      ) {
-
-        clearInterval(
-          timerInterval
-        );
-
-
-        timerInterval =
-          null;
-
-      }
-
-    }
-
-
-    function updateTimer() {
-
-      const seconds =
-        Math.floor(
-
-          (
-            Date.now() -
-            timerStart
-          ) / 1000
-
-        );
-
-
-      const minutes =
-        String(
-          Math.floor(
-            seconds / 60
-          )
-        ).padStart(
-          2,
-          "0"
-        );
-
-
-      const secs =
-        String(
-          seconds % 60
-        ).padStart(
-          2,
-          "0"
-        );
-
-
-      timerEl.textContent =
-        `${minutes}:${secs}`;
-
-    }
-
-
-    /* =========================================
-       CAPTURE PHOTO
-    ========================================= */
-
-    function capturePhoto() {
-
-      const shot =
-        document.createElement(
-          "canvas"
-        );
-
-
-      shot.width =
-        CANVAS_W;
-
-
-      shot.height =
-        CANVAS_H;
-
-
-      const shotCtx =
-        shot.getContext(
-          "2d"
-        );
-
-
-      drawCoverVideo(
-        shotCtx
-      );
-
-
-      sliceIntoTiles(
-        shot
-      );
-
-
-      shuffle();
-
-
-      phase =
-        "puzzle";
-
-
-      twoHandTimerActive =
-        false;
-
-
-      cropGrab =
-        null;
-
-
-      captureBtnWrap
-        .style
-        .display =
-        "none";
-
-
-      cropControls
-        .style
-        .display =
-        "none";
-
-
-      postControls
-        .style
-        .display =
-        "flex";
-
-
-      stage.classList.add(
-        "puzzle-mode"
-      );
-
-
-      initBubbles();
-
-
-      startTimer();
-
-
-      instructions.textContent =
-        "Pinch a tile and drag it onto another tile to swap.";
-
-    }
-
-
-    /* =========================================
-       ENTER CROP
-    ========================================= */
-
-    function enterCropPhase() {
-
-      phase =
-        "crop";
-
-
-      defaultCrop();
-
-
-      twoHandTimerActive =
-        false;
-
-
-      cropGrab =
-        null;
-
-
-      captureBtnWrap
-        .style
-        .display =
-        "none";
-
-
-      cropControls
-        .style
-        .display =
-        "flex";
-
-
-      instructions.textContent =
-        "Pinch a corner to resize or pinch inside the box to move it.";
-
-    }
-
-
-    /* =========================================
-       BACK TO CAMERA
-    ========================================= */
-
-    function backToPreview() {
-
-      phase =
-        "preview";
-
-
-      stopTimer();
-
-
-      timerEl.style.display =
-        "none";
-
-
-      twoHandTimerActive =
-        false;
-
-
-      cropGrab =
-        null;
-
-
-      heldTile =
-        null;
-
-
-      cachedHands =
-        [];
-
-
-      captureBtnWrap
-        .style
-        .display =
-        "flex";
-
-
-      cropControls
-        .style
-        .display =
-        "none";
-
-
-      postControls
-        .style
-        .display =
-        "none";
-
-
-      stage.classList.remove(
-        "puzzle-mode"
-      );
-
-
-      instructions.textContent =
-        "Frame yourself, then capture.";
-
-    }
-
-
-    /* =========================================
-       UNDO
-    ========================================= */
-
-    function updateUndoBtn() {
-
-      undoBtn.disabled =
-        moveHistory.length === 0;
-
-    }
-
-
-    function undoMove() {
-
-      if (
-
-        moveHistory.length === 0 ||
-
-        phase !==
-          "puzzle"
-
-      ) {
-
-        return;
-
-      }
-
-
-      const move =
-        moveHistory.pop();
-
-
-      const temp =
-        order[
-          move.fromPos
-        ];
-
-
-      order[
-        move.fromPos
-      ] =
-        order[
-          move.toPos
-        ];
-
-
-      order[
-        move.toPos
-      ] =
-        temp;
-
-
-      heldTile =
-        null;
-
-
-      solvedShown =
-        isSolved();
-
-
-      updateUndoBtn();
-
-
-      instructions.textContent =
-        "Undid last move.";
-
-    }
-
-
-    /* =========================================
-       BUTTON EVENTS
-    ========================================= */
-
-    captureBtn.addEventListener(
-      "click",
-      enterCropPhase
-    );
-
-
-    confirmCropBtn.addEventListener(
-      "click",
-      () => {
-
-        clampCrop();
-
-        capturePhoto();
-
-      }
-    );
-
-
-    cancelCropBtn.addEventListener(
-      "click",
-      backToPreview
-    );
-
-
-    shuffleBtn.addEventListener(
-      "click",
-      () => {
-
-        shuffle();
-
-        startTimer();
-
-        instructions.textContent =
-          "Shuffled! Solve it again.";
-
-      }
-    );
-
-
-    undoBtn.addEventListener(
-      "click",
-      undoMove
-    );
-
-
-    retakeBtn.addEventListener(
-      "click",
-      backToPreview
-    );
-
-
-    /* =========================================
-       HAND SKELETON
-    ========================================= */
-
-    function drawHandSkeleton(
+    function drawHand(
       landmarks
     ) {
 
@@ -1973,114 +1636,88 @@
       ctx.beginPath();
 
 
-      connections.forEach(
-        ([a,b]) => {
+      for (
+        const [a,b]
+        of connections
+      ) {
 
-          const pa =
-            toCanvasPoint(
-              landmarks[a]
-            );
-
-
-          const pb =
-            toCanvasPoint(
-              landmarks[b]
-            );
-
-
-          ctx.moveTo(
-            pa.x,
-            pa.y
+        const p1 =
+          landmarkToCanvas(
+            landmarks[a]
           );
 
 
-          ctx.lineTo(
-            pb.x,
-            pb.y
+        const p2 =
+          landmarkToCanvas(
+            landmarks[b]
           );
 
-        }
-      );
+
+        ctx.moveTo(
+          p1.x,
+          p1.y
+        );
+
+
+        ctx.lineTo(
+          p2.x,
+          p2.y
+        );
+
+      }
 
 
       ctx.stroke();
 
 
-      /*
-        Draw landmark dots
-      */
+      for (
+        const lm
+        of landmarks
+      ) {
 
-      landmarks.forEach(
-        landmark => {
-
-          const point =
-            toCanvasPoint(
-              landmark
-            );
-
-
-          ctx.beginPath();
-
-
-          ctx.arc(
-            point.x,
-            point.y,
-            2.5,
-            0,
-            Math.PI * 2
+        const p =
+          landmarkToCanvas(
+            lm
           );
 
 
-          ctx.fillStyle =
-            "rgba(255,255,255,0.95)";
+        ctx.beginPath();
 
 
-          ctx.fill();
+        ctx.arc(
+          p.x,
+          p.y,
+          2.5,
+          0,
+          Math.PI * 2
+        );
 
-        }
-      );
+
+        ctx.fillStyle =
+          "#ffffff";
+
+
+        ctx.fill();
+
+      }
 
     }
 
 
     /* =========================================
-       CROP DRAWING
-    ========================================= */
+       CROP RECTANGLE
+    ========================================== */
 
-    function cropHandleRadius() {
-
-      return Math.max(
-
-        24,
-
-        Math.min(
-          CANVAS_W,
-          CANVAS_H
-        ) * 0.032
-
-      );
-
-    }
-
-
-    function drawCropBox() {
-
-      ctx.save();
-
-
-      /*
-        Dark translucent area
-        outside the crop.
-      */
+    function drawCrop() {
 
       ctx.fillStyle =
-        "rgba(7,89,133,0.22)";
+        "rgba(7,89,133,0.25)";
 
 
       ctx.fillRect(
         0,
         0,
-        CANVAS_W,
+        W,
         crop.y
       );
 
@@ -2090,15 +1727,13 @@
         0,
 
         crop.y +
-          crop.h,
+        crop.h,
 
-        CANVAS_W,
+        W,
 
-        CANVAS_H -
-          (
-            crop.y +
-            crop.h
-          )
+        H -
+        crop.y -
+        crop.h
 
       );
 
@@ -2119,24 +1754,18 @@
       ctx.fillRect(
 
         crop.x +
-          crop.w,
+        crop.w,
 
         crop.y,
 
-        CANVAS_W -
-          (
-            crop.x +
-            crop.w
-          ),
+        W -
+        crop.x -
+        crop.w,
 
         crop.h
 
       );
 
-
-      /*
-        Crop border
-      */
 
       ctx.strokeStyle =
         "#ffffff";
@@ -2159,111 +1788,685 @@
       );
 
 
-      /*
-        Corner handles
-      */
-
-      const r =
-        cropHandleRadius();
-
-
       const corners = [
 
-        [
-          crop.x,
-          crop.y
-        ],
+        [crop.x, crop.y],
 
         [
           crop.x +
-            crop.w,
+          crop.w,
           crop.y
         ],
 
         [
           crop.x,
           crop.y +
-            crop.h
+          crop.h
         ],
 
         [
           crop.x +
-            crop.w,
+          crop.w,
           crop.y +
-            crop.h
+          crop.h
         ]
 
       ];
 
 
-      corners.forEach(
-        ([cx,cy]) => {
+      for (
+        const [x,y]
+        of corners
+      ) {
 
-          ctx.beginPath();
-
-
-          ctx.arc(
-            cx,
-            cy,
-            r * 0.4,
-            0,
-            Math.PI * 2
-          );
+        ctx.beginPath();
 
 
-          ctx.fillStyle =
-            "#ffffff";
+        ctx.arc(
+          x,
+          y,
+          13,
+          0,
+          Math.PI * 2
+        );
 
 
-          ctx.fill();
+        ctx.fillStyle =
+          "#ffffff";
 
 
-          ctx.beginPath();
+        ctx.fill();
 
-
-          ctx.arc(
-            cx,
-            cy,
-            r,
-            0,
-            Math.PI * 2
-          );
-
-
-          ctx.strokeStyle =
-            "rgba(255,255,255,0.7)";
-
-
-          ctx.lineWidth =
-            1.5;
-
-
-          ctx.stroke();
-
-        }
-      );
-
-
-      ctx.restore();
+      }
 
     }
 
 
     /* =========================================
-       TWO HAND TIMER
-    ========================================= */
+       GRID
+    ========================================== */
 
-    function drawTwoHandTimer() {
+    function getCell(
+      pos
+    ) {
+
+      const col =
+        pos % GRID;
+
+
+      const row =
+        Math.floor(
+          pos / GRID
+        );
+
+
+      return {
+
+        x:
+          crop.x +
+          col *
+          crop.w /
+          GRID,
+
+        y:
+          crop.y +
+          row *
+          crop.h /
+          GRID,
+
+        w:
+          crop.w /
+          GRID,
+
+        h:
+          crop.h /
+          GRID
+
+      };
+
+    }
+
+
+    function positionAt(
+      x,
+      y
+    ) {
 
       if (
-        !twoHandTimerActive
-      )
+
+        x < crop.x ||
+
+        y < crop.y ||
+
+        x >=
+        crop.x +
+        crop.w ||
+
+        y >=
+        crop.y +
+        crop.h
+
+      ) {
+
+        return -1;
+
+      }
+
+
+      const col =
+        Math.floor(
+
+          (
+            x -
+            crop.x
+          ) /
+          (
+            crop.w /
+            GRID
+          )
+
+        );
+
+
+      const row =
+        Math.floor(
+
+          (
+            y -
+            crop.y
+          ) /
+          (
+            crop.h /
+            GRID
+          )
+
+        );
+
+
+      return (
+        row *
+        GRID +
+        col
+      );
+
+    }
+
+
+    /* =========================================
+       CREATE PUZZLE
+    ========================================== */
+
+    function createPuzzle(
+      source
+    ) {
+
+      tileCanvases =
+        [];
+
+
+      const tileW =
+        crop.w /
+        GRID;
+
+
+      const tileH =
+        crop.h /
+        GRID;
+
+
+      for (
+        let i = 0;
+        i < GRID * GRID;
+        i++
+      ) {
+
+        const col =
+          i % GRID;
+
+
+        const row =
+          Math.floor(
+            i / GRID
+          );
+
+
+        const tile =
+          document.createElement(
+            "canvas"
+          );
+
+
+        tile.width =
+          tileW;
+
+
+        tile.height =
+          tileH;
+
+
+        const tileCtx =
+          tile.getContext(
+            "2d"
+          );
+
+
+        tileCtx.drawImage(
+
+          source,
+
+          crop.x +
+          col * tileW,
+
+          crop.y +
+          row * tileH,
+
+          tileW,
+
+          tileH,
+
+          0,
+
+          0,
+
+          tileW,
+
+          tileH
+
+        );
+
+
+        tileCanvases.push(
+          tile
+        );
+
+      }
+
+    }
+
+
+    /* =========================================
+       SHUFFLE
+    ========================================== */
+
+    function shufflePuzzle() {
+
+      order =
+        [
+          ...Array(
+            GRID * GRID
+          ).keys()
+        ];
+
+
+      do {
+
+        for (
+          let i =
+            order.length - 1;
+
+          i > 0;
+
+          i--
+
+        ) {
+
+          const j =
+            Math.floor(
+              Math.random() *
+              (i + 1)
+            );
+
+
+          [
+            order[i],
+            order[j]
+          ] =
+          [
+            order[j],
+            order[i]
+          ];
+
+        }
+
+      }
+
+      while (
+        isSolved()
+      );
+
+
+      heldTile =
+        null;
+
+
+      moveHistory =
+        [];
+
+
+      solvedShown =
+        false;
+
+
+      updateUndo();
+
+    }
+
+
+    function isSolved() {
+
+      return order.every(
+
+        (
+          value,
+          index
+        ) =>
+          value === index
+
+      );
+
+    }
+
+
+    /* =========================================
+       SCOREBOARD
+    ========================================== */
+
+    const SCORE_KEY =
+      "oceanJigsawScores";
+
+
+    function getScores() {
+
+      try {
+
+        const saved =
+          localStorage.getItem(
+            SCORE_KEY
+          );
+
+
+        if (!saved)
+          return [];
+
+
+        const data =
+          JSON.parse(
+            saved
+          );
+
+
+        return Array.isArray(data)
+          ? data
+          : [];
+
+      }
+
+      catch {
+
+        return [];
+
+      }
+
+    }
+
+
+    function saveScores(
+      scores
+    ) {
+
+      localStorage.setItem(
+
+        SCORE_KEY,
+
+        JSON.stringify(
+          scores
+        )
+
+      );
+
+    }
+
+
+    function formatTime(
+      milliseconds
+    ) {
+
+      const seconds =
+        Math.ceil(
+          milliseconds /
+          1000
+        );
+
+
+      const mins =
+        Math.floor(
+          seconds / 60
+        );
+
+
+      const secs =
+        seconds % 60;
+
+
+      return (
+
+        String(mins)
+          .padStart(2,"0")
+
+        +
+
+        ":"
+
+        +
+
+        String(secs)
+          .padStart(2,"0")
+
+      );
+
+    }
+
+
+    function escapeHTML(
+      value
+    ) {
+
+      return String(value)
+
+        .replace(
+          /&/g,
+          "&amp;"
+        )
+
+        .replace(
+          /</g,
+          "&lt;"
+        )
+
+        .replace(
+          />/g,
+          "&gt;"
+        )
+
+        .replace(
+          /"/g,
+          "&quot;"
+        )
+
+        .replace(
+          /'/g,
+          "&#039;"
+        );
+
+    }
+
+
+    function renderScoreboard() {
+
+      const scores =
+        getScores();
+
+
+      if (
+        scores.length === 0
+      ) {
+
+        scoreList.textContent =
+          "No scores yet.";
+
         return;
+
+      }
+
+
+      scoreList.innerHTML =
+
+        scores
+          .slice(0,10)
+          .map(
+
+            (
+              score,
+              index
+            ) => {
+
+              const date =
+                score.date
+                  ? new Date(
+                      score.date
+                    )
+                    .toLocaleDateString()
+                  : "";
+
+
+              return `
+
+                <div
+                  class="score-row"
+                >
+
+                  <span>
+                    ${index + 1}
+                  </span>
+
+                  <span
+                    class="score-name"
+                  >
+                    ${escapeHTML(
+                      score.name
+                    )}
+                  </span>
+
+                  <span
+                    class="score-time"
+                  >
+                    ${escapeHTML(
+                      score.time
+                    )}
+                  </span>
+
+                  <span
+                    class="score-date"
+                  >
+                    ${escapeHTML(
+                      date
+                    )}
+                  </span>
+
+                </div>
+
+              `;
+
+            }
+
+          )
+
+          .join("");
+
+    }
+
+
+    function addScore(
+      milliseconds
+    ) {
+
+      const scores =
+        getScores();
+
+
+      scores.push({
+
+        name:
+          playerName ||
+          "Player",
+
+        time:
+          formatTime(
+            milliseconds
+          ),
+
+        milliseconds,
+
+        date:
+          new Date()
+            .toISOString()
+
+      });
+
+
+      scores.sort(
+
+        (a,b) =>
+          a.milliseconds -
+          b.milliseconds
+
+      );
+
+
+      saveScores(
+
+        scores.slice(
+          0,
+          50
+        )
+
+      );
+
+
+      renderScoreboard();
+
+    }
+
+
+    /* =========================================
+       TIMER
+    ========================================== */
+
+    function startTimer() {
+
+      stopTimer();
+
+
+      timerStart =
+        Date.now();
+
+
+      roundStarted =
+        true;
+
+
+      timer.style.display =
+        "block";
+
+
+      updateTimer();
+
+
+      timerInterval =
+        setInterval(
+          updateTimer,
+          100
+        );
+
+    }
+
+
+    function stopTimer() {
+
+      if (
+        timerInterval
+      ) {
+
+        clearInterval(
+          timerInterval
+        );
+
+
+        timerInterval =
+          null;
+
+      }
+
+    }
+
+
+    function updateTimer() {
+
+      if (
+        !roundStarted
+      ) {
+
+        timer.textContent =
+          "01:00";
+
+        return;
+
+      }
 
 
       const elapsed =
-        performance.now() -
-        twoHandTimerStart;
+        Date.now() -
+        timerStart;
 
 
       const remaining =
@@ -2271,550 +2474,565 @@
 
           0,
 
-          CROP_HOLD_MS -
-            elapsed
+          ROUND_TIME -
+          elapsed
 
         );
 
 
-      const progress =
-        1 -
-        remaining /
-          CROP_HOLD_MS;
-
-
-      const cx =
-        CANVAS_W / 2;
-
-
-      const cy =
-        Math.min(
-          CANVAS_H * 0.16,
-          130
+      timer.textContent =
+        formatTime(
+          remaining
         );
 
 
-      const radius =
-        Math.max(
+      if (
 
-          28,
+        remaining <= 0 &&
 
-          Math.min(
-            CANVAS_W,
-            CANVAS_H
-          ) * 0.045
+        !resultShown
 
-        );
+      ) {
 
+        showLoss();
 
-      ctx.save();
-
-
-      /*
-        Circle background
-      */
-
-      ctx.beginPath();
-
-
-      ctx.arc(
-        cx,
-        cy,
-        radius,
-        0,
-        Math.PI * 2
-      );
-
-
-      ctx.fillStyle =
-        "rgba(255,255,255,0.78)";
-
-
-      ctx.fill();
-
-
-      /*
-        Progress ring
-      */
-
-      ctx.beginPath();
-
-
-      ctx.arc(
-
-        cx,
-
-        cy,
-
-        radius,
-
-        -Math.PI / 2,
-
-        -Math.PI / 2 +
-          progress *
-          Math.PI * 2
-
-      );
-
-
-      ctx.strokeStyle =
-        "#075985";
-
-
-      ctx.lineWidth =
-        5;
-
-
-      ctx.stroke();
-
-
-      /*
-        Number
-      */
-
-      ctx.fillStyle =
-        "#075985";
-
-
-      ctx.font =
-        `bold ${
-          Math.round(
-            radius * 0.9
-          )
-        }px sans-serif`;
-
-
-      ctx.textAlign =
-        "center";
-
-
-      ctx.textBaseline =
-        "middle";
-
-
-      ctx.fillText(
-
-        Math.ceil(
-          remaining / 1000
-        ).toString(),
-
-        cx,
-
-        cy + 1
-
-      );
-
-
-      ctx.restore();
+      }
 
     }
 
 
     /* =========================================
-       RENDER
-    ========================================= */
+       WIN
+    ========================================== */
 
-    function render() {
-
-      ctx.clearRect(
-
-        0,
-
-        0,
-
-        CANVAS_W,
-
-        CANVAS_H
-
-      );
-
-
-      /*
-        CAMERA / CROP
-      */
+    function showWin() {
 
       if (
+        resultShown
+      )
+        return;
 
-        phase === "preview" ||
 
-        phase === "crop"
+      resultShown =
+        true;
 
-      ) {
 
-        drawCoverVideo(
-          ctx
+      roundStarted =
+        false;
+
+
+      stopTimer();
+
+
+      const elapsed =
+        Math.min(
+
+          ROUND_TIME,
+
+          Date.now() -
+          timerStart
+
         );
 
 
-        if (
-          phase === "crop"
-        ) {
+      addScore(
+        elapsed
+      );
 
-          drawCropBox();
 
-          drawTwoHandTimer();
+      resultIcon.textContent =
+        "🎉";
 
-        }
+
+      resultTitle.textContent =
+        "you've won a prize";
+
+
+      resultDetails.textContent =
+
+        `${playerName || "Player"} solved the puzzle in ${formatTime(elapsed)}.`;
+
+
+      resultModal.style.display =
+        "flex";
+
+
+      scheduleRestart();
+
+    }
+
+
+    /* =========================================
+       LOSS
+    ========================================== */
+
+    function showLoss() {
+
+      if (
+        resultShown
+      )
+        return;
+
+
+      resultShown =
+        true;
+
+
+      roundStarted =
+        false;
+
+
+      stopTimer();
+
+
+      resultIcon.textContent =
+        "😢";
+
+
+      resultTitle.textContent =
+        "oh no you've lost";
+
+
+      resultDetails.textContent =
+        "Time's up!";
+
+
+      resultModal.style.display =
+        "flex";
+
+
+      scheduleRestart();
+
+    }
+
+
+    /* =========================================
+       AUTO RESTART
+    ========================================== */
+
+    function scheduleRestart() {
+
+      if (
+        restartTimeout
+      ) {
+
+        clearTimeout(
+          restartTimeout
+        );
 
       }
 
 
+      restartTimeout =
+        setTimeout(
+
+          restartGame,
+
+          AUTO_RESTART
+
+        );
+
+    }
+
+
+    function restartGame() {
+
+      if (
+        restartTimeout
+      ) {
+
+        clearTimeout(
+          restartTimeout
+        );
+
+
+        restartTimeout =
+          null;
+
+      }
+
+
+      resultModal.style.display =
+        "none";
+
+
+      phase =
+        "preview";
+
+
+      roundStarted =
+        false;
+
+
+      resultShown =
+        false;
+
+
+      solvedShown =
+        false;
+
+
+      heldTile =
+        null;
+
+
+      moveHistory =
+        [];
+
+
+      timer.style.display =
+        "none";
+
+
+      captureControls.style.display =
+        "flex";
+
+
+      cropControls.style.display =
+        "none";
+
+
+      puzzleControls.style.display =
+        "none";
+
+
+      stage.classList.remove(
+        "puzzle-mode"
+      );
+
+
+      instructions.textContent =
+
+        `New round! ${playerName || "Player"}, frame yourself and capture.`;
+
+
+      createBubbles();
+
+    }
+
+
+    /* =========================================
+       CAPTURE PHOTO
+    ========================================== */
+
+    function capturePhoto() {
+
+      const photo =
+        document.createElement(
+          "canvas"
+        );
+
+
+      photo.width =
+        W;
+
+
+      photo.height =
+        H;
+
+
+      const photoCtx =
+        photo.getContext(
+          "2d"
+        );
+
+
       /*
-        PUZZLE
+        IMPORTANT:
+        Save the MIRRORED camera image.
+
+        This makes the puzzle match
+        what the player saw.
       */
 
-      else {
-
-        drawBubbles();
-
-
-        /*
-          Draw every tile
-        */
-
-        for (
-
-          let pos = 0;
-
-          pos <
-            order.length;
-
-          pos++
-
-        ) {
-
-          const tileId =
-            order[pos];
+      drawCamera(
+        photoCtx
+      );
 
 
-          /*
-            Don't draw the
-            tile being held.
-          */
-
-          if (
-
-            heldTile &&
-
-            heldTile.tileId ===
-              tileId
-
-          ) {
-
-            continue;
-
-          }
+      createPuzzle(
+        photo
+      );
 
 
-          const rect =
-            cellRect(pos);
+      shufflePuzzle();
 
 
-          ctx.drawImage(
-
-            tileCanvases[
-              tileId
-            ],
-
-            rect.x,
-
-            rect.y,
-
-            rect.w,
-
-            rect.h
-
-          );
-
-        }
+      phase =
+        "puzzle";
 
 
-        /*
-          Puzzle grid
-        */
-
-        ctx.strokeStyle =
-          "rgba(255,255,255,0.75)";
+      roundStarted =
+        true;
 
 
-        ctx.lineWidth =
-          1;
+      resultShown =
+        false;
 
 
-        for (
-
-          let i = 1;
-
-          i < GRID;
-
-          i++
-
-        ) {
-
-          const gx =
-            crop.x +
-            (
-              crop.w /
-              GRID
-            ) * i;
+      stage.classList.add(
+        "puzzle-mode"
+      );
 
 
-          ctx.beginPath();
+      captureControls.style.display =
+        "none";
 
 
-          ctx.moveTo(
-            gx,
-            crop.y
-          );
+      cropControls.style.display =
+        "none";
 
 
-          ctx.lineTo(
-            gx,
-            crop.y +
-              crop.h
-          );
+      puzzleControls.style.display =
+        "flex";
 
 
-          ctx.stroke();
+      instructions.textContent =
+        "✋ Pinch a puzzle piece and move it onto another piece.";
 
 
-          const gy =
-            crop.y +
-            (
-              crop.h /
-              GRID
-            ) * i;
+      startTimer();
+
+    }
 
 
-          ctx.beginPath();
+    /* =========================================
+       CROP PHASE
+    ========================================== */
+
+    function enterCrop() {
+
+      phase =
+        "crop";
 
 
-          ctx.moveTo(
-            crop.x,
-            gy
-          );
+      defaultCrop();
 
 
-          ctx.lineTo(
-            crop.x +
-              crop.w,
-            gy
-          );
+      previousPinch =
+        false;
 
 
-          ctx.stroke();
+      cropGrab =
+        null;
 
-        }
+
+      captureControls.style.display =
+        "none";
 
 
-        /*
-          Held puzzle piece
-        */
+      cropControls.style.display =
+        "flex";
+
+
+      instructions.textContent =
+        "Adjust the crop using your hand, then confirm.";
+
+    }
+
+
+    /* =========================================
+       PREVIEW
+    ========================================== */
+
+    function backToPreview() {
+
+      phase =
+        "preview";
+
+
+      roundStarted =
+        false;
+
+
+      resultShown =
+        false;
+
+
+      stopTimer();
+
+
+      timer.style.display =
+        "none";
+
+
+      heldTile =
+        null;
+
+
+      captureControls.style.display =
+        "flex";
+
+
+      cropControls.style.display =
+        "none";
+
+
+      puzzleControls.style.display =
+        "none";
+
+
+      stage.classList.remove(
+        "puzzle-mode"
+      );
+
+
+      instructions.textContent =
+        `Good luck, ${playerName || "Player"}! Frame yourself and capture.`;
+
+    }
+
+
+    /* =========================================
+       UNDO
+    ========================================== */
+
+    function updateUndo() {
+
+      undoBtn.disabled =
+        moveHistory.length === 0;
+
+    }
+
+
+    function undoMove() {
+
+      if (
+
+        moveHistory.length === 0 ||
+
+        resultShown
+
+      )
+        return;
+
+
+      const move =
+        moveHistory.pop();
+
+
+      [
+        order[
+          move.from
+        ],
+
+        order[
+          move.to
+        ]
+
+      ] =
+      [
+
+        order[
+          move.to
+        ],
+
+        order[
+          move.from
+        ]
+
+      ];
+
+
+      heldTile =
+        null;
+
+
+      updateUndo();
+
+    }
+
+
+    /* =========================================
+       HAND CROP
+    ========================================== */
+
+    function handleCrop(
+      hands
+    ) {
+
+      /*
+        Two-hand crop:
+
+        Pinch both hands and use them
+        as opposite corners.
+      */
+
+      if (
+
+        hands.length >= 2 &&
+
+        hands[0].pinching &&
+
+        hands[1].pinching
+
+      ) {
+
+        const p1 =
+          hands[0].pinchPoint;
+
+
+        const p2 =
+          hands[1].pinchPoint;
+
+
+        crop = {
+
+          x:
+            Math.min(
+              p1.x,
+              p2.x
+            ),
+
+          y:
+            Math.min(
+              p1.y,
+              p2.y
+            ),
+
+          w:
+            Math.abs(
+              p1.x -
+              p2.x
+            ),
+
+          h:
+            Math.abs(
+              p1.y -
+              p2.y
+            )
+
+        };
+
+
+        clampCrop();
+
 
         if (
-
-          heldTile &&
-
-          cursor.visible
-
+          !twoHandTimer
         ) {
 
-          const cw =
-            crop.w / GRID;
-
-
-          const ch =
-            crop.h / GRID;
-
-
-          const dw =
-            cw * 1.08;
-
-
-          const dh =
-            ch * 1.08;
-
-
-          ctx.save();
-
-
-          ctx.shadowColor =
-            "rgba(7,89,133,0.35)";
-
-
-          ctx.shadowBlur =
-            18;
-
-
-          ctx.drawImage(
-
-            tileCanvases[
-              heldTile.tileId
-            ],
-
-            cursor.x -
-              dw / 2,
-
-            cursor.y -
-              dh / 2,
-
-            dw,
-
-            dh
-
-          );
-
-
-          ctx.restore();
-
-        }
-
-
-        /*
-          Puzzle solved
-        */
-
-        if (
-
-          isSolved() &&
-
-          !solvedShown
-
-        ) {
-
-          solvedShown =
+          twoHandTimer =
             true;
 
 
-          stopTimer();
-
-
-          instructions.innerHTML =
-            "🎉 Puzzle solved!";
+          twoHandStart =
+            performance.now();
 
         }
 
 
         if (
-          isSolved()
+
+          performance.now() -
+          twoHandStart >=
+          CROP_HOLD
+
         ) {
 
-          ctx.fillStyle =
-            "rgba(255,255,255,0.95)";
-
-
-          ctx.font =
-            `bold ${
-              Math.round(
-                CANVAS_W *
-                0.032
-              )
-            }px sans-serif`;
-
-
-          ctx.textAlign =
-            "center";
-
-
-          ctx.fillText(
-
-            "SOLVED 🫧",
-
-            CANVAS_W / 2,
-
-            CANVAS_H * 0.1
-
-          );
+          capturePhoto();
 
         }
-
-      }
-
-
-      /*
-        Draw detected hands
-      */
-
-      cachedHands.forEach(
-        hand => {
-
-          drawHandSkeleton(
-            hand.landmarks
-          );
-
-        }
-      );
-
-
-      /*
-        Cursor
-      */
-
-      if (
-
-        cursor.visible &&
-
-        phase === "puzzle"
-
-      ) {
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-
-          cursor.x,
-
-          cursor.y,
-
-          11,
-
-          0,
-
-          Math.PI * 2
-
-        );
-
-
-        ctx.strokeStyle =
-          heldTile
-
-            ? "#ffffff"
-
-            : "rgba(255,255,255,0.9)";
-
-
-        ctx.lineWidth =
-          3;
-
-
-        ctx.stroke();
-
-      }
-
-    }
-
-
-    /* =========================================
-       SINGLE HAND CROP
-    ========================================= */
-
-    function handleSingleHandCrop(
-      hand
-    ) {
-
-      if (!hand) {
-
-        prevPinching =
-          false;
-
-
-        cropGrab =
-          null;
-
-
-        cursor.visible =
-          false;
 
 
         return;
@@ -2822,37 +3040,38 @@
       }
 
 
-      const pinching =
-        hand.pinching;
+      twoHandTimer =
+        false;
 
 
-      cursor.x =
-        hand.pinchPoint.x;
+      const hand =
+        hands[0];
 
 
-      cursor.y =
-        hand.pinchPoint.y;
+      if (!hand) {
+
+        previousPinch =
+          false;
+
+        cropGrab =
+          null;
+
+        return;
+
+      }
 
 
-      cursor.visible =
-        true;
+      const point =
+        hand.pinchPoint;
 
-
-      /*
-        Start pinch
-      */
 
       if (
 
-        pinching &&
+        hand.pinching &&
 
-        !prevPinching
+        !previousPinch
 
       ) {
-
-        const radius =
-          cropHandleRadius();
-
 
         const corners = {
 
@@ -2897,15 +3116,16 @@
 
 
         for (
-          const key in corners
+          const key
+          in corners
         ) {
 
           if (
 
-            dist(
-              cursor,
+            distance(
+              point,
               corners[key]
-            ) < radius
+            ) < 30
 
           ) {
 
@@ -2919,33 +3139,30 @@
         }
 
 
-        /*
-          Pinch inside box
-          = move crop
-        */
+        if (!mode) {
 
-        if (
+          if (
 
-          !mode &&
-
-          cursor.x >
+            point.x >
             crop.x &&
 
-          cursor.x <
+            point.x <
             crop.x +
-              crop.w &&
+            crop.w &&
 
-          cursor.y >
+            point.y >
             crop.y &&
 
-          cursor.y <
+            point.y <
             crop.y +
-              crop.h
+            crop.h
 
-        ) {
+          ) {
 
-          mode =
-            "move";
+            mode =
+              "move";
+
+          }
 
         }
 
@@ -2957,12 +3174,12 @@
             mode,
 
             startX:
-              cursor.x,
+              point.x,
 
             startY:
-              cursor.y,
+              point.y,
 
-            orig:
+            original:
               {
                 ...crop
               }
@@ -2974,117 +3191,131 @@
       }
 
 
-      /*
-        Continue pinch
-      */
+      if (
 
-      else if (
+        hand.pinching &&
 
-        pinching &&
-
-        prevPinching &&
+        previousPinch &&
 
         cropGrab
 
       ) {
 
         const dx =
-          cursor.x -
+          point.x -
           cropGrab.startX;
 
 
         const dy =
-          cursor.y -
+          point.y -
           cropGrab.startY;
 
 
         const original =
-          cropGrab.orig;
+          cropGrab.original;
 
 
-        switch (
-          cropGrab.mode
+        if (
+          cropGrab.mode ===
+          "move"
         ) {
 
-          case "move":
-
-            crop.x =
-              original.x +
-              dx;
-
-            crop.y =
-              original.y +
-              dy;
-
-            break;
+          crop.x =
+            original.x +
+            dx;
 
 
-          case "tl":
+          crop.y =
+            original.y +
+            dy;
 
-            crop.x =
-              original.x +
-              dx;
-
-            crop.y =
-              original.y +
-              dy;
-
-            crop.w =
-              original.w -
-              dx;
-
-            crop.h =
-              original.h -
-              dy;
-
-            break;
+        }
 
 
-          case "tr":
+        if (
+          cropGrab.mode ===
+          "tl"
+        ) {
 
-            crop.y =
-              original.y +
-              dy;
-
-            crop.w =
-              original.w +
-              dx;
-
-            crop.h =
-              original.h -
-              dy;
-
-            break;
+          crop.x =
+            original.x +
+            dx;
 
 
-          case "bl":
-
-            crop.x =
-              original.x +
-              dx;
-
-            crop.w =
-              original.w -
-              dx;
-
-            crop.h =
-              original.h +
-              dy;
-
-            break;
+          crop.y =
+            original.y +
+            dy;
 
 
-          case "br":
+          crop.w =
+            original.w -
+            dx;
 
-            crop.w =
-              original.w +
-              dx;
 
-            crop.h =
-              original.h +
-              dy;
+          crop.h =
+            original.h -
+            dy;
 
-            break;
+        }
+
+
+        if (
+          cropGrab.mode ===
+          "tr"
+        ) {
+
+          crop.y =
+            original.y +
+            dy;
+
+
+          crop.w =
+            original.w +
+            dx;
+
+
+          crop.h =
+            original.h -
+            dy;
+
+        }
+
+
+        if (
+          cropGrab.mode ===
+          "bl"
+        ) {
+
+          crop.x =
+            original.x +
+            dx;
+
+
+          crop.w =
+            original.w -
+            dx;
+
+
+          crop.h =
+            original.h +
+            dy;
+
+        }
+
+
+        if (
+          cropGrab.mode ===
+          "br"
+        ) {
+
+          crop.w =
+            original.w +
+            dx;
+
+
+          crop.h =
+            original.h +
+            dy;
 
         }
 
@@ -3094,15 +3325,11 @@
       }
 
 
-      /*
-        Release pinch
-      */
+      if (
 
-      else if (
+        !hand.pinching &&
 
-        !pinching &&
-
-        prevPinching
+        previousPinch
 
       ) {
 
@@ -3112,134 +3339,28 @@
       }
 
 
-      prevPinching =
-        pinching;
+      previousPinch =
+        hand.pinching;
 
     }
 
 
     /* =========================================
-       TWO HAND CROP
-    ========================================= */
+       PUZZLE HAND CONTROL
+    ========================================== */
 
-    function handleCropLogic(
-      hands
-    ) {
+    let cursor = {
 
-      const twoHandMode =
+      x: 0,
 
-        hands.length >= 2 &&
+      y: 0,
 
-        hands[0].pinching &&
+      visible: false
 
-        hands[1].pinching;
+    };
 
 
-      if (twoHandMode) {
-
-        cropGrab =
-          null;
-
-
-        const p1 =
-          hands[0].pinchPoint;
-
-
-        const p2 =
-          hands[1].pinchPoint;
-
-
-        crop = {
-
-          x:
-            Math.min(
-              p1.x,
-              p2.x
-            ),
-
-          y:
-            Math.min(
-              p1.y,
-              p2.y
-            ),
-
-          w:
-            Math.abs(
-              p1.x -
-              p2.x
-            ),
-
-          h:
-            Math.abs(
-              p1.y -
-              p2.y
-            )
-
-        };
-
-
-        softClampCrop();
-
-
-        if (
-          !twoHandTimerActive
-        ) {
-
-          twoHandTimerActive =
-            true;
-
-
-          twoHandTimerStart =
-            performance.now();
-
-        }
-
-
-        /*
-          Hold both pinches
-          for 5 seconds.
-        */
-
-        if (
-
-          performance.now() -
-          twoHandTimerStart >=
-          CROP_HOLD_MS
-
-        ) {
-
-          clampCrop();
-
-          capturePhoto();
-
-        }
-
-
-        cursor.visible =
-          false;
-
-
-        return;
-
-      }
-
-
-      twoHandTimerActive =
-        false;
-
-
-      handleSingleHandCrop(
-        hands[0] || null
-      );
-
-    }
-
-
-    /* =========================================
-       PUZZLE HAND LOGIC
-    ========================================= */
-
-    function handlePuzzleLogic(
+    function handlePuzzle(
       hand
     ) {
 
@@ -3249,7 +3370,7 @@
           false;
 
 
-        prevPinching =
+        previousPinch =
           false;
 
 
@@ -3275,20 +3396,20 @@
 
 
       /*
-        Pinch down
-        = pick up tile
+        PINCH DOWN
+        = pick up piece
       */
 
       if (
 
         pinching &&
 
-        !prevPinching
+        !previousPinch
 
       ) {
 
         const pos =
-          gridPosAt(
+          positionAt(
 
             cursor.x,
 
@@ -3310,7 +3431,7 @@
             tileId:
               order[pos],
 
-            fromPos:
+            from:
               pos
 
           };
@@ -3321,105 +3442,444 @@
 
 
       /*
-        Release
-        = drop tile
+        RELEASE
+        = drop/swap
       */
 
-      else if (
+      if (
 
         !pinching &&
 
-        prevPinching
+        previousPinch &&
+
+        heldTile
 
       ) {
 
-        if (heldTile) {
+        const destination =
+          positionAt(
 
-          const dropPos =
-            gridPosAt(
+            cursor.x,
 
-              cursor.x,
+            cursor.y
 
-              cursor.y
-
-            );
+          );
 
 
-          if (
+        if (
 
-            dropPos !== -1 &&
+          destination !== -1 &&
 
-            dropPos !==
-              heldTile.fromPos
+          destination !==
+          heldTile.from
 
-          ) {
+        ) {
 
-            const otherTile =
-              order[
-                dropPos
-              ];
-
+          [
+            order[
+              destination
+            ],
 
             order[
-              dropPos
-            ] =
-              heldTile.tileId;
+              heldTile.from
+            ]
 
+          ] =
+          [
 
             order[
-              heldTile.fromPos
-            ] =
-              otherTile;
+              heldTile.from
+            ],
+
+            order[
+              destination
+            ]
+
+          ];
 
 
-            moveHistory.push({
+          moveHistory.push({
 
-              fromPos:
-                heldTile.fromPos,
+            from:
+              heldTile.from,
 
-              toPos:
-                dropPos
+            to:
+              destination
 
-            });
-
-
-            updateUndoBtn();
-
-          }
+          });
 
 
-          heldTile =
-            null;
+          updateUndo();
 
         }
+
+
+        heldTile =
+          null;
 
       }
 
 
-      prevPinching =
+      previousPinch =
         pinching;
 
     }
 
 
     /* =========================================
+       RENDER
+    ========================================== */
+
+    function render() {
+
+      ctx.clearRect(
+        0,
+        0,
+        W,
+        H
+      );
+
+
+      /*
+        CAMERA
+      */
+
+      if (
+
+        phase ===
+        "preview" ||
+
+        phase ===
+        "crop"
+
+      ) {
+
+        drawCamera(
+          ctx
+        );
+
+
+        if (
+          phase ===
+          "crop"
+        ) {
+
+          drawCrop();
+
+        }
+
+      }
+
+
+      /*
+        PUZZLE
+      */
+
+      else {
+
+        drawBubbles();
+
+
+        for (
+          let pos = 0;
+          pos < order.length;
+          pos++
+        ) {
+
+          const tileId =
+            order[pos];
+
+
+          if (
+
+            heldTile &&
+
+            heldTile.tileId ===
+            tileId
+
+          ) {
+
+            continue;
+
+          }
+
+
+          const cell =
+            getCell(
+              pos
+            );
+
+
+          ctx.drawImage(
+
+            tileCanvases[
+              tileId
+            ],
+
+            cell.x,
+
+            cell.y,
+
+            cell.w,
+
+            cell.h
+
+          );
+
+        }
+
+
+        /*
+          Grid lines
+        */
+
+        ctx.strokeStyle =
+          "rgba(255,255,255,0.7)";
+
+
+        ctx.lineWidth =
+          1;
+
+
+        for (
+          let i = 1;
+          i < GRID;
+          i++
+        ) {
+
+          const x =
+            crop.x +
+            crop.w /
+            GRID *
+            i;
+
+
+          const y =
+            crop.y +
+            crop.h /
+            GRID *
+            i;
+
+
+          ctx.beginPath();
+
+
+          ctx.moveTo(
+            x,
+            crop.y
+          );
+
+
+          ctx.lineTo(
+            x,
+            crop.y +
+            crop.h
+          );
+
+
+          ctx.stroke();
+
+
+          ctx.beginPath();
+
+
+          ctx.moveTo(
+            crop.x,
+            y
+          );
+
+
+          ctx.lineTo(
+            crop.x +
+            crop.w,
+            y
+          );
+
+
+          ctx.stroke();
+
+        }
+
+
+        /*
+          Held piece
+        */
+
+        if (
+
+          heldTile &&
+
+          cursor.visible
+
+        ) {
+
+          const cw =
+            crop.w /
+            GRID;
+
+
+          const ch =
+            crop.h /
+            GRID;
+
+
+          ctx.save();
+
+
+          ctx.shadowColor =
+            "rgba(7,89,133,0.35)";
+
+
+          ctx.shadowBlur =
+            20;
+
+
+          ctx.drawImage(
+
+            tileCanvases[
+              heldTile.tileId
+            ],
+
+            cursor.x -
+            cw * 0.54,
+
+            cursor.y -
+            ch * 0.54,
+
+            cw * 1.08,
+
+            ch * 1.08
+
+          );
+
+
+          ctx.restore();
+
+        }
+
+
+        /*
+          Win check
+        */
+
+        if (
+
+          isSolved() &&
+
+          !solvedShown
+
+        ) {
+
+          solvedShown =
+            true;
+
+
+          showWin();
+
+        }
+
+      }
+
+
+      /*
+        Draw hand tracking
+      */
+
+      for (
+        const hand
+        of detectedHands
+      ) {
+
+        drawHand(
+          hand.landmarks
+        );
+
+      }
+
+
+      /*
+        Hand cursor
+      */
+
+      if (
+
+        cursor.visible &&
+
+        phase ===
+        "puzzle"
+
+      ) {
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+          cursor.x,
+
+          cursor.y,
+
+          11,
+
+          0,
+
+          Math.PI * 2
+
+        );
+
+
+        ctx.strokeStyle =
+          "#ffffff";
+
+
+        ctx.lineWidth =
+          3;
+
+
+        ctx.stroke();
+
+      }
+
+    }
+
+
+    /* =========================================
        MEDIAPIPE
-    ========================================= */
+    ========================================== */
 
-    async function initHandTracking() {
+    let handLandmarker =
+      null;
 
-      instructions.textContent =
-        "Loading hand tracking…";
 
+    let detectedHands =
+      [];
+
+
+    let detectionBusy =
+      false;
+
+
+    let lastVideoTime =
+      -1;
+
+
+    let frameNumber =
+      0;
+
+
+    async function setupHandTracking() {
 
       try {
 
+        instructions.textContent =
+          "Loading hand tracking…";
+
+
         /*
-          Load the WASM runtime.
+          Load MediaPipe WASM.
         */
 
-        const filesetResolver =
-
+        const vision =
           await FilesetResolver
             .forVisionTasks(
 
@@ -3429,15 +3889,14 @@
 
 
         /*
-          Create the hand detector.
+          Create hand detector.
         */
 
         handLandmarker =
-
           await HandLandmarker
             .createFromOptions(
 
-              filesetResolver,
+              vision,
 
               {
 
@@ -3457,25 +3916,17 @@
                   "VIDEO",
 
 
-                /*
-                  Detect up to two hands.
-                */
-
                 numHands:
                   2,
 
 
-                /*
-                  Lower thresholds
-                  make webcam detection
-                  more forgiving.
-                */
-
                 minHandDetectionConfidence:
                   0.35,
 
+
                 minHandPresenceConfidence:
                   0.35,
+
 
                 minTrackingConfidence:
                   0.35
@@ -3485,34 +3936,21 @@
             );
 
 
-        modelReady =
-          true;
-
-
         instructions.textContent =
           "✋ Hand tracking ready — pinch your thumb + index finger.";
-
-
-        console.log(
-          "MediaPipe loaded successfully."
-        );
 
       }
 
       catch (error) {
 
-        modelReady =
-          false;
-
-
         console.error(
-          "MediaPipe loading error:",
+          "MediaPipe error:",
           error
         );
 
 
         instructions.textContent =
-          "❌ Hand tracking failed to load. Check your internet connection and refresh.";
+          "❌ Hand tracking failed to load. Refresh the page.";
 
       }
 
@@ -3521,50 +3959,20 @@
 
     /* =========================================
        CAMERA LOOP
-    ========================================= */
+    ========================================== */
 
     async function cameraLoop() {
-
-      /*
-        Wait for camera.
-      */
-
-      if (
-
-        !video.videoWidth ||
-
-        video.readyState < 2
-
-      ) {
-
-        requestAnimationFrame(
-          cameraLoop
-        );
-
-        return;
-
-      }
-
-
-      /*
-        Draw camera/puzzle.
-      */
 
       render();
 
 
-      /*
-        Don't run MediaPipe
-        until model is ready.
-      */
-
       if (
-
-        !modelReady ||
 
         !handLandmarker ||
 
-        detectBusy
+        detectionBusy ||
+
+        !video.videoWidth
 
       ) {
 
@@ -3572,60 +3980,49 @@
           cameraLoop
         );
 
+
         return;
 
       }
 
 
       /*
-        Detect every second
-        frame instead of every
-        browser frame.
+        Every second frame.
       */
 
       if (
-        frameCount++ % 2 !== 0
+        frameNumber++ % 2
       ) {
 
         requestAnimationFrame(
           cameraLoop
         );
 
+
         return;
 
       }
 
 
-      /*
-        IMPORTANT:
-
-        MediaPipe VIDEO mode
-        requires timestamps to
-        continuously increase.
-
-        We use the actual video
-        timestamp instead of
-        performance.now().
-      */
-
-      const videoTime =
+      const currentTime =
         video.currentTime;
 
 
       if (
 
         !Number.isFinite(
-          videoTime
+          currentTime
         ) ||
 
-        videoTime <=
-          lastVideoTime
+        currentTime <=
+        lastVideoTime
 
       ) {
 
         requestAnimationFrame(
           cameraLoop
         );
+
 
         return;
 
@@ -3633,35 +4030,34 @@
 
 
       lastVideoTime =
-        videoTime;
+        currentTime;
 
 
-      detectBusy =
+      detectionBusy =
         true;
 
 
       try {
 
-        const timestampMs =
+        const timestamp =
           Math.round(
-            videoTime * 1000
+            currentTime *
+            1000
           );
 
 
         const result =
-
           handLandmarker
             .detectForVideo(
 
               video,
 
-              timestampMs
+              timestamp
 
             );
 
 
-        cachedHands =
-
+        detectedHands =
           (
             result.landmarks ||
             []
@@ -3670,31 +4066,29 @@
           );
 
 
-        /*
-          Crop
-        */
-
         if (
-          phase === "crop"
+          phase ===
+          "crop"
         ) {
 
-          handleCropLogic(
-            cachedHands
+          handleCrop(
+            detectedHands
           );
 
         }
 
 
-        /*
-          Puzzle
-        */
+        if (
 
-        else if (
-          phase === "puzzle"
+          phase ===
+          "puzzle" &&
+
+          !resultShown
+
         ) {
 
-          handlePuzzleLogic(
-            cachedHands[0] ||
+          handlePuzzle(
+            detectedHands[0] ||
             null
           );
 
@@ -3705,18 +4099,15 @@
       catch (error) {
 
         console.error(
-          "Hand detection error:",
+          "Detection error:",
           error
         );
 
       }
 
-      finally {
 
-        detectBusy =
-          false;
-
-      }
+      detectionBusy =
+        false;
 
 
       requestAnimationFrame(
@@ -3727,20 +4118,196 @@
 
 
     /* =========================================
+       BUTTONS
+    ========================================== */
+
+    captureBtn.addEventListener(
+
+      "click",
+
+      enterCrop
+
+    );
+
+
+    confirmCrop.addEventListener(
+
+      "click",
+
+      capturePhoto
+
+    );
+
+
+    cancelCrop.addEventListener(
+
+      "click",
+
+      backToPreview
+
+    );
+
+
+    retakeBtn.addEventListener(
+
+      "click",
+
+      backToPreview
+
+    );
+
+
+    undoBtn.addEventListener(
+
+      "click",
+
+      undoMove
+
+    );
+
+
+    shuffleBtn.addEventListener(
+
+      "click",
+
+      () => {
+
+        if (
+          !roundStarted
+        )
+          return;
+
+
+        shufflePuzzle();
+
+
+        /*
+          Shuffle gives a fresh
+          one-minute attempt.
+        */
+
+        timerStart =
+          Date.now();
+
+
+        instructions.textContent =
+          "Shuffled! You have 1 minute.";
+
+      }
+
+    );
+
+
+    /* =========================================
+       NAME POPUP
+    ========================================== */
+
+    function startWithName() {
+
+      const name =
+        playerNameInput
+          .value
+          .trim();
+
+
+      if (!name) {
+
+        playerNameInput.focus();
+
+        return;
+
+      }
+
+
+      playerName =
+        name.slice(
+          0,
+          20
+        );
+
+
+      localStorage.setItem(
+
+        "oceanJigsawPlayerName",
+
+        playerName
+
+      );
+
+
+      nameModal.style.display =
+        "none";
+
+
+      instructions.textContent =
+
+        `Good luck, ${playerName}! Frame yourself and capture.`;
+
+    }
+
+
+    startGame.addEventListener(
+
+      "click",
+
+      startWithName
+
+    );
+
+
+    playerNameInput.addEventListener(
+
+      "keydown",
+
+      event => {
+
+        if (
+          event.key ===
+          "Enter"
+        ) {
+
+          startWithName();
+
+        }
+
+      }
+
+    );
+
+
+    /* =========================================
+       INITIALISE
+    ========================================== */
+
+    renderScoreboard();
+
+
+    /*
+      Always show name popup
+      when the game opens.
+    */
+
+    if (
+      playerName
+    ) {
+
+      playerNameInput.value =
+        playerName;
+
+    }
+
+
+    nameModal.style.display =
+      "flex";
+
+
+    /* =========================================
        START CAMERA
-    ========================================= */
+    ========================================== */
 
     async function startCamera() {
 
       try {
-
-        instructions.textContent =
-          "Starting camera…";
-
-
-        /*
-          Ask browser for webcam.
-        */
 
         const stream =
 
@@ -3751,19 +4318,11 @@
               video: {
 
                 width: {
-
-                  ideal: 640,
-
-                  min: 320
-
+                  ideal: 640
                 },
 
                 height: {
-
-                  ideal: 480,
-
-                  min: 240
-
+                  ideal: 480
                 },
 
                 facingMode:
@@ -3777,79 +4336,15 @@
             });
 
 
-        /*
-          Give stream to video.
-        */
-
         video.srcObject =
           stream;
 
 
-        /*
-          Wait until camera
-          metadata exists.
-        */
-
-        await new Promise(
-          resolve => {
-
-            if (
-              video.readyState >= 1
-            ) {
-
-              resolve();
-
-            }
-
-            else {
-
-              video.addEventListener(
-
-                "loadedmetadata",
-
-                resolve,
-
-                {
-                  once: true
-                }
-
-              );
-
-            }
-
-          }
-        );
-
-
-        /*
-          Start video.
-        */
-
         await video.play();
 
 
-        console.log(
-          "Camera:",
-          video.videoWidth,
-          "x",
-          video.videoHeight
-        );
+        await setupHandTracking();
 
-
-        /*
-          NOW load MediaPipe.
-        */
-
-        await initHandTracking();
-
-
-        lastVideoTime =
-          -1;
-
-
-        /*
-          Start rendering.
-        */
 
         requestAnimationFrame(
           cameraLoop
@@ -3860,12 +4355,13 @@
       catch (error) {
 
         console.error(
-          "Camera startup error:",
+          "Camera error:",
           error
         );
 
 
         instructions.textContent =
+
           "❌ Camera could not start: " +
           error.message;
 
@@ -3874,77 +4370,37 @@
     }
 
 
+    startCamera();
+
+
     /* =========================================
-       WINDOW RESIZE
-    ========================================= */
+       RESIZE
+    ========================================== */
 
     window.addEventListener(
+
       "resize",
+
       () => {
-
-        const oldW =
-          CANVAS_W;
-
-
-        const oldH =
-          CANVAS_H;
-
 
         resizeCanvas();
 
 
         if (
-
-          phase === "crop" &&
-
-          oldW &&
-
-          oldH
-
+          phase ===
+          "crop"
         ) {
-
-          crop.x *=
-            CANVAS_W /
-            oldW;
-
-
-          crop.w *=
-            CANVAS_W /
-            oldW;
-
-
-          crop.y *=
-            CANVAS_H /
-            oldH;
-
-
-          crop.h *=
-            CANVAS_H /
-            oldH;
-
 
           clampCrop();
 
         }
 
 
-        if (
-          phase === "puzzle"
-        ) {
-
-          initBubbles();
-
-        }
+        createBubbles();
 
       }
+
     );
-
-
-    /* =========================================
-       START APP
-    ========================================= */
-
-    startCamera();
 
   </script>
 
