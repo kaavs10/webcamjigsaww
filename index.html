@@ -49,9 +49,8 @@
   .top-bar p {
     color: #ddd;
     font-size: 0.78rem;
-    margin: 0;
-    max-width: 480px;
     margin: 0 auto;
+    max-width: 480px;
   }
   .bottom-bar {
     position: fixed;
@@ -127,8 +126,8 @@
 
   const GRID = 3;
   const CROP_HOLD_MS = 5000;
-  // lower-res copy fed to MediaPipe — big perf win. Keep 4:3 to match the camera request below.
-  const DETECT_W = 240, DETECT_H = 180;
+  // Higher detection resolution than before for stable tracking, still cheap to process.
+  const DETECT_W = 320, DETECT_H = 240;
 
   let CANVAS_W = 0, CANVAS_H = 0;
   function resizeCanvas() {
@@ -152,12 +151,10 @@
   let solvedShown = false;
 
   let crop = { x: 0, y: 0, w: 0, h: 0 };
-  let cropGrab = null; // single-hand drag: { mode, startX, startY, orig }
+  let cropGrab = null;
   let twoHandTimerActive = false;
   let twoHandTimerStart = 0;
 
-  // most recent processed hands (updated by MediaPipe, read by the render loop
-  // every frame so drawing stays smooth even between detections)
   let cachedHands = [];
 
   // --- cover-fit video mapping (video -> full-screen canvas) ---
@@ -169,19 +166,15 @@
     return { vw, vh, scale, drawW, drawH, offsetX: (CANVAS_W - drawW) / 2, offsetY: (CANVAS_H - drawH) / 2 };
   }
 
+  // selfieMode mirrors the feed in MediaPipe, so no manual flip is needed here.
   function drawCoverVideo(targetCtx) {
     const t = getCoverTransform();
-    targetCtx.save();
-    targetCtx.translate(t.offsetX + t.drawW, t.offsetY);
-    targetCtx.scale(-1, 1); // mirror
-    targetCtx.drawImage(video, 0, 0, t.drawW, t.drawH);
-    targetCtx.restore();
+    targetCtx.drawImage(video, t.offsetX, t.offsetY, t.drawW, t.drawH);
   }
 
   function toCanvasPoint(landmark) {
     const t = getCoverTransform();
-    const mirroredX = t.vw - landmark.x * t.vw;
-    return { x: t.offsetX + mirroredX * t.scale, y: t.offsetY + landmark.y * t.vh * t.scale };
+    return { x: t.offsetX + landmark.x * t.vw * t.scale, y: t.offsetY + landmark.y * t.vh * t.scale };
   }
 
   function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
@@ -216,8 +209,6 @@
     if (crop.y + crop.h > CANVAS_H) crop.y = CANVAS_H - crop.h;
   }
 
-  // gentle bounds clamp used while a rectangle is actively being drawn out by
-  // two hands, so it doesn't fight the user's hand movement mid-gesture
   function softClampCrop() {
     if (crop.x < 0) { crop.w += crop.x; crop.x = 0; }
     if (crop.y < 0) { crop.h += crop.y; crop.y = 0; }
@@ -413,7 +404,7 @@
       if (isSolved() && !solvedShown) { solvedShown = true; instructions.innerHTML = '🎉 Solved!'; }
       if (isSolved()) {
         ctx.fillStyle = 'rgba(217,255,58,0.95)';
-        ctx.font = `bold ${Math.round(CANVAS_W * 0.032)}px sans-serif`; // smaller than before
+        ctx.font = `bold ${Math.round(CANVAS_W * 0.032)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.fillText('SOLVED', CANVAS_W / 2, CANVAS_H * 0.1);
       }
@@ -479,7 +470,7 @@
         clampCrop();
         capturePhoto();
       }
-      cursor.visible = false; // hide single-hand cursor dot while framing with both hands
+      cursor.visible = false;
       return;
     }
 
@@ -513,7 +504,8 @@
   const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
   hands.setOptions({
     maxNumHands: 2,
-    modelComplexity: 0,          // lite model: noticeably faster, plenty accurate for pinch detection
+    modelComplexity: 0,          // lite model: fast, plenty accurate for pinch detection
+    selfieMode: true,            // mirrors feed so landmarks match the displayed video
     minDetectionConfidence: 0.5,
     minTrackingConfidence: 0.6
   });
@@ -528,12 +520,12 @@
   const camera = new Camera(video, {
     onFrame: async () => {
       render(); // always redraw at full camera framerate, independent of detection speed
-      if (++frameCount % 2 !== 0) return; // throttle the actual (expensive) hand detection
-      detectCtx.drawImage(video, 0, 0, DETECT_W, DETECT_H); // unmirrored — toCanvasPoint() flips it
+      if (++frameCount % 3 !== 0) return; // run detection every 3rd frame to save CPU
+      detectCtx.drawImage(video, 0, 0, DETECT_W, DETECT_H);
       await hands.send({ image: detectCanvas });
     },
-    width: 960,
-    height: 720
+    width: 640,   // lower camera resolution: cheaper draws, still looks fine full-screen
+    height: 480
   });
 
   camera.start()
@@ -553,3 +545,4 @@
 </script>
 </body>
 </html>
+
