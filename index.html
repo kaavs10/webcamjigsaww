@@ -403,6 +403,83 @@
   }
 
   /* =========================
+     INSTRUCTIONS + RATING
+  ========================= */
+
+  .instructions-modal,
+  .rating-modal {
+    position: relative;
+  }
+
+  .instructions-modal p {
+    text-align: left;
+    font-size: 0.92rem;
+  }
+
+  .close-x {
+    position: absolute;
+
+    top: 10px;
+    right: 12px;
+
+    width: 38px;
+    height: 38px;
+
+    padding: 0;
+
+    background: transparent;
+
+    color: #075985;
+
+    box-shadow: none;
+
+    border-radius: 50%;
+
+    font-size: 2rem;
+
+    line-height: 1;
+  }
+
+  .rating-stars {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    margin-top: 18px;
+  }
+
+  .rating-stars .star {
+    background: transparent;
+
+    box-shadow: none;
+
+    border: none;
+
+    padding: 2px;
+
+    color: #cbd5e1;
+
+    font-size: 3rem;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+      color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .rating-stars .star:hover,
+  .rating-stars .star.selected {
+    color: #3b82f6;
+
+    transform: scale(1.08);
+  }
+
+  /* =========================
      MOBILE
   ========================= */
 
@@ -564,6 +641,72 @@
 
 
 <!-- =========================
+     INSTRUCTIONS MODAL
+========================= -->
+
+<div
+  class="modal-overlay"
+  id="instructionsModal"
+>
+
+  <div
+    class="modal instructions-modal"
+  >
+
+    <button
+      id="closeInstructionsBtn"
+      class="close-x"
+      aria-label="Close instructions"
+    >
+      ×
+    </button>
+
+    <h2>
+      🌊 How to Play
+    </h2>
+
+    <p>
+
+      <strong>1.</strong>
+      Enter your name to begin the game.
+
+      <br><br>
+
+      <strong>2.</strong>
+      Allow camera access and position yourself in the frame.
+
+      <br><br>
+
+      <strong>3.</strong>
+      Press
+      <strong>Capture Photo</strong>
+      and adjust the crop to choose the picture you want.
+
+      <br><br>
+
+      <strong>4.</strong>
+      Once the puzzle starts, you have
+      <strong>1 minute</strong>
+      to complete the 3×3 puzzle.
+
+      <br><br>
+
+      <strong>5.</strong>
+      Use your hand to pinch and drag a tile onto another tile to swap them.
+
+      <br><br>
+
+      <strong>6.</strong>
+      Complete the picture before the timer reaches 00:00!
+
+    </p>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
      NAME MODAL
 ========================= -->
 
@@ -628,6 +771,77 @@
     <p
       id="resultDetails"
     ></p>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     RATING MODAL
+========================= -->
+
+<div
+  class="modal-overlay"
+  id="ratingModal"
+>
+
+  <div class="modal rating-modal">
+
+    <h2>
+      ⭐ Rate the Game
+    </h2>
+
+    <p>
+      How would you rate your experience?
+    </p>
+
+    <div
+      class="rating-stars"
+      id="ratingStars"
+    >
+
+      <button
+        class="star"
+        data-rating="1"
+        aria-label="1 star"
+      >
+        ★
+      </button>
+
+      <button
+        class="star"
+        data-rating="2"
+        aria-label="2 stars"
+      >
+        ★
+      </button>
+
+      <button
+        class="star"
+        data-rating="3"
+        aria-label="3 stars"
+      >
+        ★
+      </button>
+
+      <button
+        class="star"
+        data-rating="4"
+        aria-label="4 stars"
+      >
+        ★
+      </button>
+
+      <button
+        class="star"
+        data-rating="5"
+        aria-label="5 stars"
+      >
+        ★
+      </button>
+
+    </div>
 
   </div>
 
@@ -793,6 +1007,26 @@ from
       "resultDetails"
     );
 
+  const ratingModal =
+    document.getElementById(
+      "ratingModal"
+    );
+
+  const ratingStars =
+    document.querySelectorAll(
+      "#ratingStars .star"
+    );
+
+  const instructionsModal =
+    document.getElementById(
+      "instructionsModal"
+    );
+
+  const closeInstructionsBtn =
+    document.getElementById(
+      "closeInstructionsBtn"
+    );
+
   const scoreboardBtn =
     document.getElementById(
       "scoreboardBtn"
@@ -828,6 +1062,7 @@ from
   const ROUND_TIME_MS =
     60 * 1000;
 
+
   /*
     Crop auto-frame timer.
     This is NOT the game timer.
@@ -835,6 +1070,7 @@ from
 
   const CROP_HOLD_MS =
     5000;
+
 
   const SCORE_KEY =
     "oceanJigsawScoreboard";
@@ -1052,6 +1288,7 @@ from
       });
 
     }
+
   }
 
 
@@ -1123,6 +1360,7 @@ from
       ctx.stroke();
 
     }
+
   }
 
 
@@ -1164,13 +1402,19 @@ from
       drawH,
 
       offsetX:
-        (CANVAS_W -
-          drawW) / 2,
+        (
+          CANVAS_W -
+          drawW
+        ) / 2,
 
       offsetY:
-        (CANVAS_H -
-          drawH) / 2
+        (
+          CANVAS_H -
+          drawH
+        ) / 2
+
     };
+
   }
 
 
@@ -1246,6 +1490,7 @@ from
         t.scale
 
     };
+
   }
 
 
@@ -1258,6 +1503,7 @@ from
       a.x - b.x,
       a.y - b.y
     );
+
   }
 
 
@@ -1343,6 +1589,7 @@ from
       }
 
     };
+
   }
 
 
@@ -1367,12 +1614,16 @@ from
     crop = {
 
       x:
-        (CANVAS_W -
-          size) / 2,
+        (
+          CANVAS_W -
+          size
+        ) / 2,
 
       y:
-        (CANVAS_H -
-          size) / 2,
+        (
+          CANVAS_H -
+          size
+        ) / 2,
 
       w:
         size,
@@ -1381,6 +1632,7 @@ from
         size
 
     };
+
   }
 
 
@@ -1540,7 +1792,9 @@ from
 
       h:
         ch
+
     };
+
   }
 
 
@@ -1565,14 +1819,26 @@ from
 
     const col =
       Math.floor(
-        (x - crop.x) /
-        (crop.w / GRID)
+        (
+          x -
+          crop.x
+        ) /
+        (
+          crop.w /
+          GRID
+        )
       );
 
     const row =
       Math.floor(
-        (y - crop.y) /
-        (crop.h / GRID)
+        (
+          y -
+          crop.y
+        ) /
+        (
+          crop.h /
+          GRID
+        )
       );
 
     return (
@@ -1580,6 +1846,7 @@ from
       GRID +
       col
     );
+
   }
 
 
@@ -1663,7 +1930,9 @@ from
       tileCanvases.push(
         tc
       );
+
     }
+
   }
 
 
@@ -1703,6 +1972,7 @@ from
           order[j],
           order[i]
         ];
+
       }
 
     } while (
@@ -1731,6 +2001,7 @@ from
       ) =>
         value === index
     );
+
   }
 
 
@@ -1768,6 +2039,7 @@ from
         updateTimer,
         100
       );
+
   }
 
 
@@ -1784,6 +2056,7 @@ from
       timerInterval =
         null;
     }
+
   }
 
 
@@ -1848,7 +2121,9 @@ from
         false;
 
       showLoss();
+
     }
+
   }
 
 
@@ -1936,6 +2211,7 @@ from
     */
 
     startTimer();
+
   }
 
 
@@ -1970,6 +2246,7 @@ from
 
     instructions.textContent =
       "Adjust the crop with your hand or mouse, then press Confirm Crop.";
+
   }
 
 
@@ -2023,6 +2300,7 @@ from
 
     instructions.textContent =
       "Frame yourself, then capture.";
+
   }
 
 
@@ -2091,6 +2369,7 @@ from
       },
       150
     );
+
   }
 
 
@@ -2102,6 +2381,7 @@ from
 
     undoBtn.disabled =
       moveHistory.length === 0;
+
   }
 
 
@@ -2135,6 +2415,7 @@ from
 
     instructions.textContent =
       "Undid last move.";
+
   }
 
 
@@ -2155,6 +2436,7 @@ from
       clampCrop();
 
       capturePhoto();
+
     }
   );
 
@@ -2192,6 +2474,7 @@ from
 
       instructions.textContent =
         "Shuffled! You have 1 minute.";
+
     }
   );
 
@@ -2209,1591 +2492,127 @@ from
 
 
   /* =========================================================
-     HAND SKELETON
+     INSTRUCTIONS POPUP
   ========================================================= */
 
-  function drawHandSkeleton(
-    landmarks
-  ) {
+  function showInstructions() {
 
-    const connections = [
+    instructionsModal.style.display =
+      "flex";
 
-      [0,1],
-      [1,2],
-      [2,3],
-      [3,4],
-
-      [0,5],
-      [5,6],
-      [6,7],
-      [7,8],
-
-      [5,9],
-      [9,10],
-      [10,11],
-      [11,12],
-
-      [9,13],
-      [13,14],
-      [14,15],
-      [15,16],
-
-      [13,17],
-      [17,18],
-      [18,19],
-      [19,20],
-
-      [0,17]
-
-    ];
-
-
-    ctx.strokeStyle =
-      "rgba(217,255,58,0.9)";
-
-    ctx.lineWidth =
-      3;
-
-    ctx.beginPath();
-
-
-    connections.forEach(
-      ([a,b]) => {
-
-        const pa =
-          toCanvasPoint(
-            landmarks[a]
-          );
-
-        const pb =
-          toCanvasPoint(
-            landmarks[b]
-          );
-
-        ctx.moveTo(
-          pa.x,
-          pa.y
-        );
-
-        ctx.lineTo(
-          pb.x,
-          pb.y
-        );
-      }
-    );
-
-
-    ctx.stroke();
-
-
-    /*
-      Larger dots make it obvious
-      when detection is working.
-    */
-
-    landmarks.forEach(
-      lm => {
-
-        const p =
-          toCanvasPoint(
-            lm
-          );
-
-        ctx.fillStyle =
-          "#ffffff";
-
-        ctx.beginPath();
-
-        ctx.arc(
-          p.x,
-          p.y,
-          4,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fill();
-      }
-    );
   }
+
+
+  function hideInstructions() {
+
+    instructionsModal.style.display =
+      "none";
+
+    startModal.style.display =
+      "flex";
+
+    playerNameInput.focus();
+
+  }
+
+
+  closeInstructionsBtn.addEventListener(
+    "click",
+    hideInstructions
+  );
 
 
   /* =========================================================
-     CROP DRAWING
+     RATING
   ========================================================= */
 
-  function cropHandleRadius() {
+  ratingStars.forEach(
+    star => {
+
+      star.addEventListener(
+        "click",
+        () => {
+
+          const rating =
+            Number(
+              star.dataset.rating
+            );
+
+          ratingStars.forEach(
+            otherStar => {
+
+              otherStar.classList.toggle(
+                "selected",
+                Number(
+                  otherStar.dataset.rating
+                ) <= rating
+              );
 
-    return Math.max(
-      28,
-      Math.min(
-        CANVAS_W,
-        CANVAS_H
-      ) *
-      0.035
-    );
-  }
-
-
-  function drawCropBox() {
-
-    ctx.save();
-
-
-    /*
-      Darken outside crop.
-    */
-
-    ctx.fillStyle =
-      "rgba(0,0,0,0.45)";
-
-    ctx.fillRect(
-      0,
-      0,
-      CANVAS_W,
-      crop.y
-    );
-
-    ctx.fillRect(
-      0,
-      crop.y +
-        crop.h,
-      CANVAS_W,
-      CANVAS_H -
-        (
-          crop.y +
-          crop.h
-        )
-    );
-
-    ctx.fillRect(
-      0,
-      crop.y,
-      crop.x,
-      crop.h
-    );
-
-    ctx.fillRect(
-      crop.x +
-        crop.w,
-      crop.y,
-      CANVAS_W -
-        (
-          crop.x +
-          crop.w
-        ),
-      crop.h
-    );
-
-
-    /*
-      Crop border.
-    */
-
-    ctx.strokeStyle =
-      "#d9ff3a";
-
-    ctx.lineWidth =
-      4;
-
-    ctx.strokeRect(
-      crop.x,
-      crop.y,
-      crop.w,
-      crop.h
-    );
-
-
-    /*
-      Grid lines.
-    */
-
-    ctx.strokeStyle =
-      "rgba(217,255,58,0.5)";
-
-    ctx.lineWidth =
-      1;
-
-    for (
-      let i = 1;
-      i < GRID;
-      i++
-    ) {
-
-      const gx =
-        crop.x +
-        (
-          crop.w /
-          GRID
-        ) *
-        i;
-
-      ctx.beginPath();
-
-      ctx.moveTo(
-        gx,
-        crop.y
-      );
-
-      ctx.lineTo(
-        gx,
-        crop.y +
-          crop.h
-      );
-
-      ctx.stroke();
-
-
-      const gy =
-        crop.y +
-        (
-          crop.h /
-          GRID
-        ) *
-        i;
-
-      ctx.beginPath();
-
-      ctx.moveTo(
-        crop.x,
-        gy
-      );
-
-      ctx.lineTo(
-        crop.x +
-          crop.w,
-        gy
-      );
-
-      ctx.stroke();
-    }
-
-
-    /*
-      Four handles.
-    */
-
-    const r =
-      cropHandleRadius();
-
-
-    [
-      [
-        crop.x,
-        crop.y
-      ],
-
-      [
-        crop.x +
-          crop.w,
-        crop.y
-      ],
-
-      [
-        crop.x,
-        crop.y +
-          crop.h
-      ],
-
-      [
-        crop.x +
-          crop.w,
-        crop.y +
-          crop.h
-      ]
-
-    ].forEach(
-      ([cx,cy]) => {
-
-        ctx.beginPath();
-
-        ctx.arc(
-          cx,
-          cy,
-          r * 0.42,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fillStyle =
-          "#d9ff3a";
-
-        ctx.fill();
-
-
-        ctx.beginPath();
-
-        ctx.arc(
-          cx,
-          cy,
-          r,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.strokeStyle =
-          "rgba(217,255,58,0.55)";
-
-        ctx.lineWidth =
-          2;
-
-        ctx.stroke();
-      }
-    );
-
-
-    ctx.restore();
-  }
-
-
-  /* =========================================================
-     TWO-HAND CROP TIMER
-  ========================================================= */
-
-  function drawTwoHandTimer() {
-
-    if (
-      !twoHandTimerActive
-    ) {
-
-      return;
-    }
-
-    const elapsed =
-      performance.now() -
-      twoHandTimerStart;
-
-    const remaining =
-      Math.max(
-        0,
-        CROP_HOLD_MS -
-          elapsed
-      );
-
-    const progress =
-      1 -
-      remaining /
-        CROP_HOLD_MS;
-
-    const cx =
-      CANVAS_W / 2;
-
-    const cy =
-      Math.min(
-        CANVAS_H * 0.16,
-        130
-      );
-
-    const R =
-      Math.max(
-        28,
-        Math.min(
-          CANVAS_W,
-          CANVAS_H
-        ) *
-        0.045
-      );
-
-
-    ctx.save();
-
-
-    ctx.beginPath();
-
-    ctx.arc(
-      cx,
-      cy,
-      R,
-      0,
-      Math.PI * 2
-    );
-
-    ctx.fillStyle =
-      "rgba(0,0,0,0.55)";
-
-    ctx.fill();
-
-
-    ctx.beginPath();
-
-    ctx.arc(
-      cx,
-      cy,
-      R,
-      -Math.PI / 2,
-      -Math.PI / 2 +
-        progress *
-        Math.PI *
-        2
-    );
-
-    ctx.strokeStyle =
-      "#d9ff3a";
-
-    ctx.lineWidth =
-      5;
-
-    ctx.stroke();
-
-
-    ctx.fillStyle =
-      "#fff";
-
-    ctx.font =
-      `bold ${Math.round(
-        R * 0.9
-      )}px sans-serif`;
-
-    ctx.textAlign =
-      "center";
-
-    ctx.textBaseline =
-      "middle";
-
-    ctx.fillText(
-      Math.ceil(
-        remaining /
-        1000
-      ).toString(),
-
-      cx,
-
-      cy + 1
-    );
-
-
-    ctx.restore();
-  }
-
-
-  /* =========================================================
-     RENDER
-  ========================================================= */
-
-  function render() {
-
-    ctx.clearRect(
-      0,
-      0,
-      CANVAS_W,
-      CANVAS_H
-    );
-
-
-    if (
-      phase === "preview" ||
-      phase === "crop"
-    ) {
-
-      /*
-        WEBCAM.
-      */
-
-      drawCoverVideo(
-        ctx
-      );
-
-
-      if (
-        phase === "crop"
-      ) {
-
-        drawCropBox();
-
-        drawTwoHandTimer();
-      }
-
-    } else {
-
-      /*
-        PUZZLE BACKGROUND.
-      */
-
-      drawBubbles();
-
-
-      /*
-        Draw puzzle tiles.
-      */
-
-      for (
-        let pos = 0;
-        pos <
-          order.length;
-        pos++
-      ) {
-
-        const tileId =
-          order[pos];
-
-
-        if (
-          heldTile &&
-          heldTile.tileId ===
-            tileId
-        ) {
-
-          continue;
-        }
-
-
-        const r =
-          cellRect(pos);
-
-
-        ctx.drawImage(
-          tileCanvases[
-            tileId
-          ],
-
-          r.x,
-          r.y,
-          r.w,
-          r.h
-        );
-      }
-
-
-      /*
-        Grid.
-      */
-
-      ctx.strokeStyle =
-        "rgba(255,255,255,0.5)";
-
-      ctx.lineWidth =
-        1;
-
-
-      for (
-        let i = 1;
-        i < GRID;
-        i++
-      ) {
-
-        const gx =
-          crop.x +
-          (
-            crop.w /
-            GRID
-          ) *
-          i;
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-          gx,
-          crop.y
-        );
-
-        ctx.lineTo(
-          gx,
-          crop.y +
-            crop.h
-        );
-
-        ctx.stroke();
-
-
-        const gy =
-          crop.y +
-          (
-            crop.h /
-            GRID
-          ) *
-          i;
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-          crop.x,
-          gy
-        );
-
-        ctx.lineTo(
-          crop.x +
-            crop.w,
-          gy
-        );
-
-        ctx.stroke();
-      }
-
-
-      /*
-        Held tile.
-      */
-
-      if (
-        heldTile &&
-        cursor.visible
-      ) {
-
-        const cw =
-          crop.w / GRID;
-
-        const ch =
-          crop.h / GRID;
-
-        const dw =
-          cw * 1.08;
-
-        const dh =
-          ch * 1.08;
-
-
-        ctx.save();
-
-        ctx.shadowColor =
-          "rgba(0,0,0,0.6)";
-
-        ctx.shadowBlur =
-          18;
-
-
-        ctx.drawImage(
-
-          tileCanvases[
-            heldTile.tileId
-          ],
-
-          cursor.x -
-            dw / 2,
-
-          cursor.y -
-            dh / 2,
-
-          dw,
-          dh
-
-        );
-
-
-        ctx.restore();
-      }
-
-
-      /*
-        Win detection.
-      */
-
-      if (
-        isSolved() &&
-        !solvedShown
-      ) {
-
-        solvedShown =
-          true;
-
-        roundStarted =
-          false;
-
-        stopTimer();
-
-        /*
-          IMPORTANT:
-          Don't immediately show popup.
-          Wait 2 seconds.
-        */
-
-        setTimeout(
-          showWin,
-          2000
-        );
-      }
-
-
-      if (
-        isSolved()
-      ) {
-
-        ctx.fillStyle =
-          "rgba(255,255,255,0.95)";
-
-        ctx.font =
-          `bold ${Math.round(
-            CANVAS_W *
-            0.032
-          )}px sans-serif`;
-
-        ctx.textAlign =
-          "center";
-
-        ctx.fillText(
-          "SOLVED",
-          CANVAS_W / 2,
-          CANVAS_H * 0.1
-        );
-      }
-    }
-
-
-    /*
-      ALWAYS draw detected hands.
-      This makes detection visible
-      during preview/crop/puzzle.
-    */
-
-    cachedHands.forEach(
-      hand => {
-
-        drawHandSkeleton(
-          hand.landmarks
-        );
-      }
-    );
-
-
-    /*
-      Cursor.
-    */
-
-    if (
-      cursor.visible &&
-      (
-        phase === "puzzle" ||
-        phase === "crop"
-      )
-    ) {
-
-      ctx.beginPath();
-
-      ctx.arc(
-        cursor.x,
-        cursor.y,
-        11,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.strokeStyle =
-        heldTile
-          ? "#d9ff3a"
-          : "rgba(255,255,255,0.9)";
-
-      ctx.lineWidth =
-        3;
-
-      ctx.stroke();
-    }
-  }
-
-
-  /* =========================================================
-     SINGLE HAND CROP
-  ========================================================= */
-
-  function handleSingleHandCrop(
-    hand
-  ) {
-
-    if (!hand) {
-
-      prevPinching =
-        false;
-
-      cropGrab =
-        null;
-
-      cursor.visible =
-        false;
-
-      return;
-    }
-
-
-    const pinching =
-      hand.pinching;
-
-
-    cursor.x =
-      hand.pinchPoint.x;
-
-    cursor.y =
-      hand.pinchPoint.y;
-
-    cursor.visible =
-      true;
-
-
-    if (
-      pinching &&
-      !prevPinching
-    ) {
-
-      const r =
-        cropHandleRadius();
-
-
-      const corners = {
-
-        tl: {
-          x: crop.x,
-          y: crop.y
-        },
-
-        tr: {
-          x:
-            crop.x +
-            crop.w,
-
-          y:
-            crop.y
-        },
-
-        bl: {
-          x:
-            crop.x,
-
-          y:
-            crop.y +
-            crop.h
-        },
-
-        br: {
-          x:
-            crop.x +
-            crop.w,
-
-          y:
-            crop.y +
-            crop.h
-        }
-
-      };
-
-
-      let mode =
-        null;
-
-
-      for (
-        const key in corners
-      ) {
-
-        if (
-          dist(
-            cursor,
-            corners[key]
-          ) < r
-        ) {
-
-          mode =
-            key;
-
-          break;
-        }
-      }
-
-
-      /*
-        If not on a corner,
-        allow moving the entire
-        crop rectangle.
-      */
-
-      if (
-        !mode &&
-        cursor.x >
-          crop.x &&
-        cursor.x <
-          crop.x +
-          crop.w &&
-        cursor.y >
-          crop.y &&
-        cursor.y <
-          crop.y +
-          crop.h
-      ) {
-
-        mode =
-          "move";
-      }
-
-
-      if (mode) {
-
-        cropGrab = {
-
-          mode,
-
-          startX:
-            cursor.x,
-
-          startY:
-            cursor.y,
-
-          orig:
-            {
-              ...crop
             }
-
-        };
-      }
-
-
-    } else if (
-      pinching &&
-      prevPinching &&
-      cropGrab
-    ) {
-
-      const dx =
-        cursor.x -
-        cropGrab.startX;
-
-      const dy =
-        cursor.y -
-        cropGrab.startY;
-
-      const o =
-        cropGrab.orig;
-
-
-      switch (
-        cropGrab.mode
-      ) {
-
-        case "move":
-
-          crop.x =
-            o.x + dx;
-
-          crop.y =
-            o.y + dy;
-
-          break;
-
-
-        case "tl":
-
-          crop.x =
-            o.x + dx;
-
-          crop.y =
-            o.y + dy;
-
-          crop.w =
-            o.w - dx;
-
-          crop.h =
-            o.h - dy;
-
-          break;
-
-
-        case "tr":
-
-          crop.y =
-            o.y + dy;
-
-          crop.w =
-            o.w + dx;
-
-          crop.h =
-            o.h - dy;
-
-          break;
-
-
-        case "bl":
-
-          crop.x =
-            o.x + dx;
-
-          crop.w =
-            o.w - dx;
-
-          crop.h =
-            o.h + dy;
-
-          break;
-
-
-        case "br":
-
-          crop.w =
-            o.w + dx;
-
-          crop.h =
-            o.h + dy;
-
-          break;
-      }
-
-
-      clampCrop();
-
-
-    } else if (
-      !pinching &&
-      prevPinching
-    ) {
-
-      cropGrab =
-        null;
-    }
-
-
-    prevPinching =
-      pinching;
-  }
-
-
-  /* =========================================================
-     TWO-HAND CROP
-  ========================================================= */
-
-  function handleCropLogic(
-    hands2
-  ) {
-
-    const twoHandMode =
-      hands2.length >= 2 &&
-      hands2[0].pinching &&
-      hands2[1].pinching;
-
-
-    if (
-      twoHandMode
-    ) {
-
-      cropGrab =
-        null;
-
-
-      const p1 =
-        hands2[0]
-          .pinchPoint;
-
-      const p2 =
-        hands2[1]
-          .pinchPoint;
-
-
-      crop = {
-
-        x:
-          Math.min(
-            p1.x,
-            p2.x
-          ),
-
-        y:
-          Math.min(
-            p1.y,
-            p2.y
-          ),
-
-        w:
-          Math.abs(
-            p1.x -
-            p2.x
-          ),
-
-        h:
-          Math.abs(
-            p1.y -
-            p2.y
-          )
-
-      };
-
-
-      softClampCrop();
-
-
-      if (
-        !twoHandTimerActive
-      ) {
-
-        twoHandTimerActive =
-          true;
-
-        twoHandTimerStart =
-          performance.now();
-      }
-
-
-      /*
-        Auto-capture ONLY after
-        holding both pinches for
-        5 seconds.
-      */
-
-      if (
-        performance.now() -
-          twoHandTimerStart >=
-        CROP_HOLD_MS
-      ) {
-
-        clampCrop();
-
-        capturePhoto();
-      }
-
-
-      cursor.visible =
-        false;
-
-      return;
-    }
-
-
-    twoHandTimerActive =
-      false;
-
-
-    handleSingleHandCrop(
-      hands2[0] ||
-      null
-    );
-  }
-
-
-  /* =========================================================
-     PUZZLE HAND LOGIC
-  ========================================================= */
-
-  function handlePuzzleLogic(
-    hand
-  ) {
-
-    if (!hand) {
-
-      cursor.visible =
-        false;
-
-      prevPinching =
-        false;
-
-      heldTile =
-        null;
-
-      return;
-    }
-
-
-    cursor.x =
-      hand.pinchPoint.x;
-
-    cursor.y =
-      hand.pinchPoint.y;
-
-    cursor.visible =
-      true;
-
-
-    const pinching =
-      hand.pinching;
-
-
-    /*
-      START HOLDING TILE.
-    */
-
-    if (
-      pinching &&
-      !prevPinching
-    ) {
-
-      const pos =
-        gridPosAt(
-          cursor.x,
-          cursor.y
-        );
-
-
-      if (
-        pos !== -1 &&
-        !heldTile
-      ) {
-
-        heldTile = {
-
-          tileId:
-            order[pos],
-
-          fromPos:
-            pos
-
-        };
-      }
-    }
-
-
-    /*
-      RELEASE TILE.
-    */
-
-    else if (
-      !pinching &&
-      prevPinching
-    ) {
-
-      if (
-        heldTile
-      ) {
-
-        const dropPos =
-          gridPosAt(
-            cursor.x,
-            cursor.y
           );
 
 
-        if (
-          dropPos !== -1 &&
-          dropPos !==
-            heldTile.fromPos
-        ) {
+          setTimeout(
+            () => {
 
-          const otherTile =
-            order[
-              dropPos
-            ];
+              ratingModal.style.display =
+                "none";
 
+              showInstructions();
 
-          order[
-            dropPos
-          ] =
-            heldTile.tileId;
+            },
+            350
+          );
 
-
-          order[
-            heldTile.fromPos
-          ] =
-            otherTile;
-
-
-          moveHistory.push({
-
-            fromPos:
-              heldTile.fromPos,
-
-            toPos:
-              dropPos
-
-          });
-
-
-          updateUndoBtn();
         }
+      );
 
-
-        heldTile =
-          null;
-      }
-    }
-
-
-    prevPinching =
-      pinching;
-  }
-
-
-  /* =========================================================
-     MOUSE / TOUCH CROP SUPPORT
-     
-     THIS IS EXTRA ON PURPOSE:
-     If the hand crop is annoying,
-     you can still adjust the crop
-     manually.
-  ========================================================= */
-
-  let pointerCropGrab =
-    null;
-
-
-  function getPointerCanvasPoint(
-    event
-  ) {
-
-    const rect =
-      canvas.getBoundingClientRect();
-
-
-    return {
-
-      x:
-        (
-          event.clientX -
-          rect.left
-        ) *
-        (
-          canvas.width /
-          rect.width
-        ),
-
-      y:
-        (
-          event.clientY -
-          rect.top
-        ) *
-        (
-          canvas.height /
-          rect.height
-        )
-
-    };
-  }
-
-
-  canvas.addEventListener(
-    "pointerdown",
-    event => {
-
-      if (
-        phase !== "crop"
-      ) {
-
-        return;
-      }
-
-
-      const p =
-        getPointerCanvasPoint(
-          event
-        );
-
-
-      const r =
-        cropHandleRadius();
-
-
-      const corners = {
-
-        tl: {
-          x: crop.x,
-          y: crop.y
-        },
-
-        tr: {
-          x:
-            crop.x +
-            crop.w,
-
-          y:
-            crop.y
-        },
-
-        bl: {
-          x:
-            crop.x,
-
-          y:
-            crop.y +
-            crop.h
-        },
-
-        br: {
-          x:
-            crop.x +
-            crop.w,
-
-          y:
-            crop.y +
-            crop.h
-        }
-
-      };
-
-
-      let mode =
-        null;
-
-
-      for (
-        const key in corners
-      ) {
-
-        if (
-          dist(
-            p,
-            corners[key]
-          ) <
-          r * 1.3
-        ) {
-
-          mode =
-            key;
-
-          break;
-        }
-      }
-
-
-      if (
-        !mode &&
-        p.x >
-          crop.x &&
-        p.x <
-          crop.x +
-          crop.w &&
-        p.y >
-          crop.y &&
-        p.y <
-          crop.y +
-          crop.h
-      ) {
-
-        mode =
-          "move";
-      }
-
-
-      if (
-        mode
-      ) {
-
-        pointerCropGrab = {
-
-          mode,
-
-          startX:
-            p.x,
-
-          startY:
-            p.y,
-
-          orig:
-            {
-              ...crop
-            }
-
-        };
-
-        canvas.setPointerCapture(
-          event.pointerId
-        );
-      }
     }
   );
 
 
-  canvas.addEventListener(
-    "pointermove",
-    event => {
+  /* =========================================================
+     SCOREBOARD OPEN/CLOSE
+  ========================================================= */
 
-      if (
-        phase !== "crop" ||
-        !pointerCropGrab
-      ) {
+  scoreboardBtn.addEventListener(
+    "click",
+    () => {
 
-        return;
-      }
+      renderScoreboard();
 
+      scoreboardModal.style.display =
+        "flex";
 
-      const p =
-        getPointerCanvasPoint(
-          event
-        );
-
-
-      const dx =
-        p.x -
-        pointerCropGrab.startX;
-
-      const dy =
-        p.y -
-        pointerCropGrab.startY;
-
-
-      const o =
-        pointerCropGrab.orig;
-
-
-      switch (
-        pointerCropGrab.mode
-      ) {
-
-        case "move":
-
-          crop.x =
-            o.x + dx;
-
-          crop.y =
-            o.y + dy;
-
-          break;
-
-
-        case "tl":
-
-          crop.x =
-            o.x + dx;
-
-          crop.y =
-            o.y + dy;
-
-          crop.w =
-            o.w - dx;
-
-          crop.h =
-            o.h - dy;
-
-          break;
-
-
-        case "tr":
-
-          crop.y =
-            o.y + dy;
-
-          crop.w =
-            o.w + dx;
-
-          crop.h =
-            o.h - dy;
-
-          break;
-
-
-        case "bl":
-
-          crop.x =
-            o.x + dx;
-
-          crop.w =
-            o.w - dx;
-
-          crop.h =
-            o.h + dy;
-
-          break;
-
-
-        case "br":
-
-          crop.w =
-            o.w + dx;
-
-          crop.h =
-            o.h + dy;
-
-          break;
-      }
-
-
-      clampCrop();
     }
   );
 
 
-  canvas.addEventListener(
-    "pointerup",
+  closeScoreboardBtn.addEventListener(
+    "click",
+    () => {
+
+      scoreboardModal.style.display =
+        "none";
+
+    }
+  );
+
+
+  scoreboardModal.addEventListener(
+    "click",
     event => {
 
-      pointerCropGrab =
-        null;
+      if (
+        event.target ===
+        scoreboardModal
+      ) {
 
-      try {
+        scoreboardModal.style.display =
+          "none";
 
-        canvas.releasePointerCapture(
-          event.pointerId
-        );
+      }
 
-      } catch {}
     }
   );
 
@@ -3802,36 +2621,36 @@ from
      SCOREBOARD
   ========================================================= */
 
+  const SCORE_KEY_2 =
+    "oceanJigsawScoreboard";
+
+
   function escapeHTML(
     value
   ) {
 
     return String(value)
-
       .replace(
         /&/g,
         "&amp;"
       )
-
       .replace(
         /</g,
         "&lt;"
       )
-
       .replace(
         />/g,
         "&gt;"
       )
-
       .replace(
         /"/g,
         "&quot;"
       )
-
       .replace(
         /'/g,
         "&#039;"
       );
+
   }
 
 
@@ -3841,21 +2660,13 @@ from
 
       const saved =
         localStorage.getItem(
-          SCORE_KEY
+          SCORE_KEY_2
         );
-
-
-      if (!saved) {
-
-        return [];
-      }
-
 
       const scores =
-        JSON.parse(
-          saved
-        );
-
+        saved
+          ? JSON.parse(saved)
+          : [];
 
       return Array.isArray(
         scores
@@ -3868,11 +2679,14 @@ from
     ) {
 
       console.error(
+        "Could not load scoreboard:",
         error
       );
 
       return [];
+
     }
+
   }
 
 
@@ -3883,7 +2697,7 @@ from
     try {
 
       localStorage.setItem(
-        SCORE_KEY,
+        SCORE_KEY_2,
         JSON.stringify(
           scores
         )
@@ -3894,44 +2708,51 @@ from
     ) {
 
       console.error(
+        "Could not save scoreboard:",
         error
       );
+
     }
+
   }
 
 
   function formatScoreTime(
-    milliseconds
+    ms
   ) {
 
     const seconds =
-      Math.ceil(
-        milliseconds /
-        1000
-      );
-
-    const mm =
-      String(
-        Math.floor(
-          seconds /
-          60
+      Math.max(
+        0,
+        Math.ceil(
+          ms / 1000
         )
-      ).padStart(
-        2,
-        "0"
       );
 
-    const ss =
+    const minutes =
+      Math.floor(
+        seconds / 60
+      );
+
+    const secs =
+      seconds % 60;
+
+    return (
       String(
-        seconds %
-        60
+        minutes
       ).padStart(
         2,
         "0"
-      );
+      ) +
+      ":" +
+      String(
+        secs
+      ).padStart(
+        2,
+        "0"
+      )
+    );
 
-
-    return `${mm}:${ss}`;
   }
 
 
@@ -3940,25 +2761,24 @@ from
     const scores =
       getScores();
 
-
     if (
-      scores.length === 0
+      !scores.length
     ) {
 
-      scoreboardList.innerHTML =
-        `
-          <div class="no-scores">
-            No scores yet. Be the first! 🌊
-          </div>
-        `;
+      scoreboardList.textContent =
+        "No scores yet.";
 
       return;
+
     }
 
 
     scoreboardList.innerHTML =
       scores
-        .slice(0, 50)
+        .slice(
+          0,
+          10
+        )
         .map(
           (
             score,
@@ -3971,7 +2791,6 @@ from
                     score.date
                   ).toLocaleDateString()
                 : "";
-
 
             return `
 
@@ -4002,9 +2821,11 @@ from
               </div>
 
             `;
+
           }
         )
         .join("");
+
   }
 
 
@@ -4014,7 +2835,6 @@ from
 
     const scores =
       getScores();
-
 
     scores.push({
 
@@ -4027,17 +2847,20 @@ from
           elapsedMs
         ),
 
-      elapsedMs:
-        elapsedMs,
+      elapsedMs,
+
+      result:
+        "win",
 
       date:
-        new Date().toISOString()
+        new Date()
+          .toISOString()
 
     });
 
 
     /*
-      Fastest first.
+      Fastest winning times first.
     */
 
     scores.sort(
@@ -4050,6 +2873,10 @@ from
     );
 
 
+    /*
+      Keep up to 50 saved scores.
+    */
+
     saveScores(
       scores.slice(
         0,
@@ -4059,49 +2886,8 @@ from
 
 
     renderScoreboard();
+
   }
-
-
-  /* =========================================================
-     SCOREBOARD OPEN/CLOSE
-  ========================================================= */
-
-  scoreboardBtn.addEventListener(
-    "click",
-    () => {
-
-      renderScoreboard();
-
-      scoreboardModal.style.display =
-        "flex";
-    }
-  );
-
-
-  closeScoreboardBtn.addEventListener(
-    "click",
-    () => {
-
-      scoreboardModal.style.display =
-        "none";
-    }
-  );
-
-
-  scoreboardModal.addEventListener(
-    "click",
-    event => {
-
-      if (
-        event.target ===
-        scoreboardModal
-      ) {
-
-        scoreboardModal.style.display =
-          "none";
-      }
-    }
-  );
 
 
   /* =========================================================
@@ -4161,7 +2947,7 @@ from
 
     /*
       Prize popup = 3 seconds.
-      Then ENTER YOUR NAME.
+      Then rating popup.
     */
 
     setTimeout(
@@ -4170,11 +2956,20 @@ from
         resultModal.style.display =
           "none";
 
-        returnToNameScreen();
+        ratingStars.forEach(
+          star =>
+            star.classList.remove(
+              "selected"
+            )
+        );
+
+        ratingModal.style.display =
+          "flex";
 
       },
       3000
     );
+
   }
 
 
@@ -4222,12 +3017,8 @@ from
 
 
     /*
-      IMPORTANT:
-
-      Losing also returns to
-      ENTER YOUR NAME.
-
-      No 3-minute restart.
+      Losing also goes to
+      the rating popup.
     */
 
     setTimeout(
@@ -4236,11 +3027,20 @@ from
         resultModal.style.display =
           "none";
 
-        returnToNameScreen();
+        ratingStars.forEach(
+          star =>
+            star.classList.remove(
+              "selected"
+            )
+        );
+
+        ratingModal.style.display =
+          "flex";
 
       },
       3000
     );
+
   }
 
 
@@ -4264,7 +3064,9 @@ from
       ) {
 
         startFromName();
+
       }
+
     }
   );
 
@@ -4276,11 +3078,14 @@ from
         .trim();
 
 
-    if (!name) {
+    if (
+      !name
+    ) {
 
       playerNameInput.focus();
 
       return;
+
     }
 
 
@@ -4307,33 +3112,24 @@ from
 
     instructions.textContent =
       `Good luck, ${playerName}! Frame yourself, then capture.`;
+
   }
 
 
   /* =========================================================
-     INITIALIZE SCOREBOARD + NAME SCREEN
+     INITIALIZE SCOREBOARD + INSTRUCTIONS
   ========================================================= */
 
   renderScoreboard();
 
 
   /*
-    ALWAYS ask for name when the
-    page is opened.
+    Instructions appear first
+    whenever the game is opened.
   */
 
-  startModal.style.display =
+  instructionsModal.style.display =
     "flex";
-
-
-  setTimeout(
-    () => {
-
-      playerNameInput.focus();
-
-    },
-    100
-  );
 
 
   /* =========================================================
@@ -4402,6 +3198,7 @@ from
 
     instructions.textContent =
       "Hand tracking ready — frame yourself, then capture.";
+
   }
 
 
@@ -4421,6 +3218,7 @@ from
       );
 
       return;
+
     }
 
 
@@ -4442,6 +3240,7 @@ from
       );
 
       return;
+
     }
 
 
@@ -4462,6 +3261,7 @@ from
       );
 
       return;
+
     }
 
 
@@ -4487,6 +3287,7 @@ from
       );
 
       return;
+
     }
 
 
@@ -4565,12 +3366,14 @@ from
 
       detectBusy =
         false;
+
     }
 
 
     requestAnimationFrame(
       cameraLoop
     );
+
   }
 
 
@@ -4588,13 +3391,19 @@ from
           video: {
 
             width: {
+
               ideal: 640,
+
               min: 320
+
             },
 
             height: {
+
               ideal: 480,
+
               min: 240
+
             },
 
             facingMode:
@@ -4631,6 +3440,7 @@ from
                   true
               }
             );
+
           }
 
         }
@@ -4668,7 +3478,9 @@ from
 
       instructions.textContent =
         "Camera or hand tracking failed. Please allow camera access and refresh.";
+
     }
+
   }
 
 
@@ -4717,6 +3529,7 @@ from
 
 
         clampCrop();
+
       }
 
 
@@ -4725,6 +3538,7 @@ from
       ) {
 
         initBubbles();
+
       }
 
     }
@@ -4732,7 +3546,6 @@ from
 
 
 })();
-
 </script>
 
 </body>
