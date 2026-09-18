@@ -3,628 +3,3143 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Live Puzzle — Hand Tracking</title>
-<style>
-  :root { --accent: #d9ff3a; }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0; width: 100%; height: 100%;
-    overflow: hidden; background: #000;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
-  #stage { position: fixed; inset: 0; width: 100vw; height: 100vh; }
-  video { display: none; }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
-  /* cute gradient background during puzzle phase */
+<title>Ocean Jigsaw — Hand Tracking</title>
+
+<style>
+  :root {
+    --accent: #ffffff;
+    --blue-dark: #075985;
+    --blue-mid: #0e7490;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+
+    background:
+      linear-gradient(
+        135deg,
+        #dff7ff 0%,
+        #b8ecfa 45%,
+        #8bd3ec 100%
+      );
+
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
+  }
+
+  #stage {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+
+    background:
+      linear-gradient(
+        135deg,
+        #dff7ff 0%,
+        #b8ecfa 45%,
+        #8bd3ec 100%
+      );
+  }
+
+  video {
+    display: none;
+  }
+
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Ocean background during puzzle phase */
   #stage.puzzle-mode {
-    background: linear-gradient(135deg, #ff9ad5 0%, #c084fc 45%, #a78bfa 100%);
+    background:
+      radial-gradient(
+        circle at 20% 20%,
+        rgba(255,255,255,0.45),
+        transparent 25%
+      ),
+      radial-gradient(
+        circle at 80% 70%,
+        rgba(255,255,255,0.25),
+        transparent 30%
+      ),
+      linear-gradient(
+        135deg,
+        #dff7ff 0%,
+        #b8ecfa 45%,
+        #8bd3ec 100%
+      );
   }
 
   .top-bar {
-    position: fixed; top: 0; left: 0; right: 0;
-    padding: max(14px, env(safe-area-inset-top)) 16px 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    padding:
+      max(14px, env(safe-area-inset-top))
+      16px
+      10px;
+
     text-align: center;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent);
-    z-index: 10; pointer-events: none;
+
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.55),
+        transparent
+      );
+
+    z-index: 10;
+    pointer-events: none;
   }
+
   .top-bar h1 {
-    font-size: 0.95rem; letter-spacing: 0.15em; text-transform: uppercase;
-    color: var(--accent); margin: 0 0 3px;
+    font-size: 0.95rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+
+    color: var(--blue-dark);
+
+    margin: 0 0 3px;
   }
-  .top-bar p { color: #ddd; font-size: 0.78rem; margin: 0 auto; max-width: 480px; }
+
+  .top-bar p {
+    color: #164e63;
+    font-size: 0.78rem;
+
+    margin: 0 auto;
+    max-width: 480px;
+  }
 
   .timer {
-    position: fixed; top: max(14px, env(safe-area-inset-top)); right: 16px;
-    z-index: 11; color: #fff; font-weight: 700; font-size: 1rem;
-    background: rgba(0,0,0,0.45); padding: 8px 14px; border-radius: 999px;
-    display: none; letter-spacing: 0.05em;
+    position: fixed;
+
+    top: max(14px, env(safe-area-inset-top));
+    right: 16px;
+
+    z-index: 11;
+
+    color: #075985;
+
+    font-weight: 700;
+    font-size: 1rem;
+
+    background: rgba(255,255,255,0.65);
+
+    padding: 8px 14px;
+
+    border-radius: 999px;
+
+    display: none;
+
+    letter-spacing: 0.05em;
+
     font-variant-numeric: tabular-nums;
+
+    box-shadow:
+      0 4px 18px rgba(7,89,133,0.12);
+
+    backdrop-filter: blur(8px);
   }
 
   .bottom-bar {
-    position: fixed; bottom: max(20px, env(safe-area-inset-bottom));
-    left: 0; right: 0; display: flex; gap: 10px; justify-content: center; z-index: 10;
+    position: fixed;
+
+    bottom:
+      max(20px, env(safe-area-inset-bottom));
+
+    left: 0;
+    right: 0;
+
+    display: flex;
+
+    gap: 10px;
+
+    justify-content: center;
+
+    z-index: 10;
   }
+
   button {
-    background: var(--accent); color: #111; border: none;
-    padding: 13px 24px; border-radius: 999px; font-weight: 700; font-size: 0.9rem;
-    cursor: pointer; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    background: rgba(255,255,255,0.9);
+
+    color: #075985;
+
+    border: none;
+
+    padding: 13px 24px;
+
+    border-radius: 999px;
+
+    font-weight: 700;
+
+    font-size: 0.9rem;
+
+    cursor: pointer;
+
+    letter-spacing: 0.02em;
+
+    box-shadow:
+      0 4px 16px rgba(7,89,133,0.18);
+
+    backdrop-filter: blur(8px);
+
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
   }
+
+  button:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+      0 7px 20px rgba(7,89,133,0.22);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
   button.secondary {
-    background: rgba(0,0,0,0.5); color: var(--accent); border: 1.5px solid var(--accent);
+    background: rgba(255,255,255,0.45);
+
+    color: #075985;
+
+    border:
+      1.5px solid rgba(7,89,133,0.35);
   }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  button:disabled {
+    opacity: 0.4;
+
+    cursor: not-allowed;
+  }
 </style>
 </head>
+
 <body>
 
 <div class="top-bar">
-  <h1>Live Puzzle</h1>
-  <p id="instructions">Allow camera access to begin…</p>
+
+  <h1>Ocean Jigsaw 🫧</h1>
+
+  <p id="instructions">
+    Allow camera access to begin…
+  </p>
+
 </div>
 
-<div class="timer" id="timer">00:00</div>
+<div class="timer" id="timer">
+  00:00
+</div>
 
 <div id="stage">
-  <video id="video" playsinline autoplay muted></video>
+
+  <video
+    id="video"
+    playsinline
+    autoplay
+    muted>
+  </video>
+
   <canvas id="canvas"></canvas>
+
 </div>
 
-<div class="bottom-bar" id="captureBtnWrap">
-  <button id="captureBtn">📸 Capture Photo</button>
+<div
+  class="bottom-bar"
+  id="captureBtnWrap">
+
+  <button id="captureBtn">
+    📸 Capture Photo
+  </button>
+
 </div>
 
-<div class="bottom-bar" id="cropControls" style="display:none;">
-  <button id="confirmCropBtn">✅ Confirm Crop</button>
-  <button class="secondary" id="cancelCropBtn">✕ Cancel</button>
+<div
+  class="bottom-bar"
+  id="cropControls"
+  style="display:none;">
+
+  <button id="confirmCropBtn">
+    ✅ Confirm Crop
+  </button>
+
+  <button
+    class="secondary"
+    id="cancelCropBtn">
+
+    ✕ Cancel
+
+  </button>
+
 </div>
 
-<div class="bottom-bar" id="postControls" style="display:none;">
-  <button id="undoBtn">↩ Undo</button>
-  <button id="shuffleBtn">🔀 Shuffle</button>
-  <button class="secondary" id="retakeBtn">↺ Retake</button>
+<div
+  class="bottom-bar"
+  id="postControls"
+  style="display:none;">
+
+  <button id="undoBtn">
+    ↩ Undo
+  </button>
+
+  <button id="shuffleBtn">
+    🔀 Shuffle
+  </button>
+
+  <button
+    class="secondary"
+    id="retakeBtn">
+
+    ↺ Retake
+
+  </button>
+
 </div>
 
-<!-- Modern, fast MediaPipe Tasks Vision -->
+
+<!--
+  MediaPipe Tasks Vision
+-->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14"></script>
 
+
 <script>
+
 (function () {
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  const stage = document.getElementById('stage');
-  const instructions = document.getElementById('instructions');
-  const timerEl = document.getElementById('timer');
-  const captureBtn = document.getElementById('captureBtn');
-  const captureBtnWrap = document.getElementById('captureBtnWrap');
-  const cropControls = document.getElementById('cropControls');
-  const confirmCropBtn = document.getElementById('confirmCropBtn');
-  const cancelCropBtn = document.getElementById('cancelCropBtn');
-  const postControls = document.getElementById('postControls');
-  const shuffleBtn = document.getElementById('shuffleBtn');
-  const undoBtn = document.getElementById('undoBtn');
-  const retakeBtn = document.getElementById('retakeBtn');
+
+  /* =========================================================
+     ELEMENTS
+  ========================================================= */
+
+  const video =
+    document.getElementById("video");
+
+  const canvas =
+    document.getElementById("canvas");
+
+  const ctx =
+    canvas.getContext("2d");
+
+  const stage =
+    document.getElementById("stage");
+
+  const instructions =
+    document.getElementById("instructions");
+
+  const timerEl =
+    document.getElementById("timer");
+
+  const captureBtn =
+    document.getElementById("captureBtn");
+
+  const captureBtnWrap =
+    document.getElementById("captureBtnWrap");
+
+  const cropControls =
+    document.getElementById("cropControls");
+
+  const confirmCropBtn =
+    document.getElementById("confirmCropBtn");
+
+  const cancelCropBtn =
+    document.getElementById("cancelCropBtn");
+
+  const postControls =
+    document.getElementById("postControls");
+
+  const shuffleBtn =
+    document.getElementById("shuffleBtn");
+
+  const undoBtn =
+    document.getElementById("undoBtn");
+
+  const retakeBtn =
+    document.getElementById("retakeBtn");
+
+
+  /* =========================================================
+     PUZZLE SETTINGS
+  ========================================================= */
 
   const GRID = 3;
+
   const CROP_HOLD_MS = 5000;
 
-  let CANVAS_W = 0, CANVAS_H = 0;
+
+  /* =========================================================
+     CANVAS
+  ========================================================= */
+
+  let CANVAS_W = 0;
+
+  let CANVAS_H = 0;
+
+
   function resizeCanvas() {
-    CANVAS_W = canvas.width = window.innerWidth;
-    CANVAS_H = canvas.height = window.innerHeight;
+
+    CANVAS_W =
+      canvas.width =
+      window.innerWidth;
+
+    CANVAS_H =
+      canvas.height =
+      window.innerHeight;
+
   }
+
+
   resizeCanvas();
 
-  // phase: 'preview' -> 'crop' -> 'puzzle'
-  let phase = 'preview';
+
+  /* =========================================================
+     GAME STATE
+  ========================================================= */
+
+  // preview → crop → puzzle
+
+  let phase = "preview";
+
   let tileCanvases = [];
+
   let order = [];
+
   let heldTile = null;
-  let cursor = { x: 0, y: 0, visible: false };
+
+
+  let cursor = {
+    x: 0,
+    y: 0,
+    visible: false
+  };
+
+
   let prevPinching = false;
+
   let solvedShown = false;
 
-  // undo + timer state
+
+  /* =========================================================
+     TIMER
+  ========================================================= */
+
   let moveHistory = [];
+
   let timerStart = 0;
+
   let timerInterval = null;
 
-  let crop = { x: 0, y: 0, w: 0, h: 0 };
+
+  /* =========================================================
+     CROP
+  ========================================================= */
+
+  let crop = {
+    x: 0,
+    y: 0,
+    w: 0,
+    h: 0
+  };
+
+
   let cropGrab = null;
+
+
   let twoHandTimerActive = false;
+
   let twoHandTimerStart = 0;
+
+
+  /* =========================================================
+     HAND TRACKING
+  ========================================================= */
 
   let cachedHands = [];
 
-  // --- cute background bubbles ---
-  const bubbles = [];
-  function initBubbles() {
-    bubbles.length = 0;
-    const count = Math.min(28, Math.floor(Math.min(CANVAS_W, CANVAS_H) / 28));
-    for (let i = 0; i < count; i++) {
-      bubbles.push({
-        x: Math.random() * CANVAS_W,
-        y: Math.random() * CANVAS_H,
-        r: 6 + Math.random() * 22,
-        speed: 0.3 + Math.random() * 0.9,
-        wobble: Math.random() * Math.PI * 2,
-        wobbleSpeed: 0.01 + Math.random() * 0.03,
-        alpha: 0.12 + Math.random() * 0.25
-      });
-    }
-  }
-  function drawBubbles() {
-    for (const b of bubbles) {
-      b.y -= b.speed;
-      b.wobble += b.wobbleSpeed;
-      const bx = b.x + Math.sin(b.wobble) * 14;
-      if (b.y < -b.r * 2) { b.y = CANVAS_H + b.r * 2; b.x = Math.random() * CANVAS_W; }
-      ctx.beginPath();
-      ctx.arc(bx, b.y, b.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${b.alpha})`;
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(bx - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${b.alpha * 0.8})`;
-      ctx.fill();
-    }
-  }
-
-  // --- cover-fit video mapping ---
-  function getCoverTransform() {
-    const vw = video.videoWidth || 640;
-    const vh = video.videoHeight || 480;
-    const scale = Math.max(CANVAS_W / vw, CANVAS_H / vh);
-    const drawW = vw * scale, drawH = vh * scale;
-    return { vw, vh, scale, drawW, drawH, offsetX: (CANVAS_W - drawW) / 2, offsetY: (CANVAS_H - drawH) / 2 };
-  }
-
-  function drawCoverVideo(targetCtx) {
-    const t = getCoverTransform();
-    targetCtx.drawImage(video, t.offsetX, t.offsetY, t.drawW, t.drawH);
-  }
-
-  function toCanvasPoint(lm) {
-    const t = getCoverTransform();
-    return { x: t.offsetX + lm.x * t.vw * t.scale, y: t.offsetY + lm.y * t.vh * t.scale };
-  }
-
-  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
-
-  function processHand(landmarks) {
-    const thumbTip = toCanvasPoint(landmarks[4]);
-    const indexTip = toCanvasPoint(landmarks[8]);
-    const wrist = toCanvasPoint(landmarks[0]);
-    const midMcp = toCanvasPoint(landmarks[9]);
-    const handScale = Math.max(dist(wrist, midMcp), 20);
-    const pinching = dist(thumbTip, indexTip) < handScale * 0.45;
-    return {
-      landmarks, thumbTip, indexTip, wrist, midMcp, pinching,
-      pinchPoint: { x: (thumbTip.x + indexTip.x) / 2, y: (thumbTip.y + indexTip.y) / 2 }
-    };
-  }
-
-  function defaultCrop() {
-    const size = Math.min(CANVAS_W, CANVAS_H) * 0.82;
-    crop = { x: (CANVAS_W - size) / 2, y: (CANVAS_H - size) / 2, w: size, h: size };
-  }
-
-  function clampCrop() {
-    const min = Math.min(CANVAS_W, CANVAS_H) * 0.18;
-    if (crop.w < min) crop.w = min;
-    if (crop.h < min) crop.h = min;
-    if (crop.w > CANVAS_W) crop.w = CANVAS_W;
-    if (crop.h > CANVAS_H) crop.h = CANVAS_H;
-    if (crop.x < 0) crop.x = 0;
-    if (crop.y < 0) crop.y = 0;
-    if (crop.x + crop.w > CANVAS_W) crop.x = CANVAS_W - crop.w;
-    if (crop.y + crop.h > CANVAS_H) crop.y = CANVAS_H - crop.h;
-  }
-
-  function softClampCrop() {
-    if (crop.x < 0) { crop.w += crop.x; crop.x = 0; }
-    if (crop.y < 0) { crop.h += crop.y; crop.y = 0; }
-    if (crop.x + crop.w > CANVAS_W) crop.w = CANVAS_W - crop.x;
-    if (crop.y + crop.h > CANVAS_H) crop.h = CANVAS_H - crop.y;
-    if (crop.w < 10) crop.w = 10;
-    if (crop.h < 10) crop.h = 10;
-  }
-
-  function cellRect(gridPos) {
-    const col = gridPos % GRID, row = Math.floor(gridPos / GRID);
-    const cw = crop.w / GRID, ch = crop.h / GRID;
-    return { x: crop.x + col * cw, y: crop.y + row * ch, w: cw, h: ch };
-  }
-
-  function gridPosAt(x, y) {
-    if (x < crop.x || y < crop.y || x >= crop.x + crop.w || y >= crop.y + crop.h) return -1;
-    const col = Math.floor((x - crop.x) / (crop.w / GRID));
-    const row = Math.floor((y - crop.y) / (crop.h / GRID));
-    return row * GRID + col;
-  }
-
-  function sliceIntoTiles(sourceCanvas) {
-    tileCanvases = [];
-    const cw = crop.w / GRID, ch = crop.h / GRID;
-    for (let i = 0; i < GRID * GRID; i++) {
-      const col = i % GRID, row = Math.floor(i / GRID);
-      const tc = document.createElement('canvas');
-      tc.width = cw; tc.height = ch;
-      tc.getContext('2d').drawImage(sourceCanvas, crop.x + col * cw, crop.y + row * ch, cw, ch, 0, 0, cw, ch);
-      tileCanvases.push(tc);
-    }
-  }
-
-  function shuffle() {
-    order = [...Array(GRID * GRID).keys()];
-    do {
-      for (let i = order.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [order[i], order[j]] = [order[j], order[i]];
-      }
-    } while (isSolved());
-    solvedShown = false;
-    heldTile = null;
-    moveHistory = [];
-    updateUndoBtn();
-  }
-
-  function isSolved() { return order.every((v, i) => v === i); }
-
-  // --- timer ---
-  function startTimer() {
-    stopTimer();
-    timerStart = Date.now();
-    timerEl.style.display = 'block';
-    timerInterval = setInterval(updateTimer, 250);
-    updateTimer();
-  }
-  function stopTimer() {
-    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-  }
-  function updateTimer() {
-    const s = Math.floor((Date.now() - timerStart) / 1000);
-    const mm = String(Math.floor(s / 60)).padStart(2, '0');
-    const ss = String(s % 60).padStart(2, '0');
-    timerEl.textContent = `${mm}:${ss}`;
-  }
-
-  function capturePhoto() {
-    const shot = document.createElement('canvas');
-    shot.width = CANVAS_W; shot.height = CANVAS_H;
-    drawCoverVideo(shot.getContext('2d'));
-    sliceIntoTiles(shot);
-    shuffle();
-    phase = 'puzzle';
-    twoHandTimerActive = false;
-    cropGrab = null;
-    captureBtnWrap.style.display = 'none';
-    cropControls.style.display = 'none';
-    postControls.style.display = 'flex';
-    stage.classList.add('puzzle-mode');
-    initBubbles();
-    startTimer();
-    instructions.textContent = 'Pinch a tile, drag it onto another to swap.';
-  }
-
-  function enterCropPhase() {
-    phase = 'crop';
-    defaultCrop();
-    twoHandTimerActive = false;
-    cropGrab = null;
-    captureBtnWrap.style.display = 'none';
-    cropControls.style.display = 'flex';
-    instructions.textContent = 'One hand: pinch a corner or inside the box to adjust. Both hands: pinch with each and hold 5s to auto-frame & capture.';
-  }
-
-  function backToPreview() {
-    phase = 'preview';
-    stopTimer();
-    timerEl.style.display = 'none';
-    twoHandTimerActive = false;
-    cropGrab = null;
-    heldTile = null;
-    captureBtnWrap.style.display = 'flex';
-    cropControls.style.display = 'none';
-    postControls.style.display = 'none';
-    stage.classList.remove('puzzle-mode');
-    instructions.textContent = 'Frame yourself, then capture.';
-  }
-
-  // --- undo ---
-  function updateUndoBtn() { undoBtn.disabled = moveHistory.length === 0; }
-  function undoMove() {
-    if (moveHistory.length === 0 || phase !== 'puzzle') return;
-    const m = moveHistory.pop();
-    const temp = order[m.fromPos];
-    order[m.fromPos] = order[m.toPos];
-    order[m.toPos] = temp;
-    heldTile = null;
-    solvedShown = isSolved();
-    updateUndoBtn();
-    instructions.textContent = 'Undid last move.';
-  }
-
-  captureBtn.addEventListener('click', enterCropPhase);
-  confirmCropBtn.addEventListener('click', () => { clampCrop(); capturePhoto(); });
-  cancelCropBtn.addEventListener('click', backToPreview);
-  shuffleBtn.addEventListener('click', () => { shuffle(); startTimer(); instructions.textContent = 'Shuffled! Solve it again.'; });
-  undoBtn.addEventListener('click', undoMove);
-  retakeBtn.addEventListener('click', backToPreview);
-
-  // === drawing ===
-  function drawHandSkeleton(landmarks) {
-    const connections = [
-      [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
-      [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]
-    ];
-    ctx.strokeStyle = 'rgba(217,255,58,0.85)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    connections.forEach(([a, b]) => {
-      const pa = toCanvasPoint(landmarks[a]), pb = toCanvasPoint(landmarks[b]);
-      ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
-    });
-    ctx.stroke();
-    landmarks.forEach(lm => {
-      const p = toCanvasPoint(lm);
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2); ctx.fill();
-    });
-  }
-
-  function cropHandleRadius() { return Math.max(24, Math.min(CANVAS_W, CANVAS_H) * 0.032); }
-
-  function drawCropBox() {
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.fillRect(0, 0, CANVAS_W, crop.y);
-    ctx.fillRect(0, crop.y + crop.h, CANVAS_W, CANVAS_H - (crop.y + crop.h));
-    ctx.fillRect(0, crop.y, crop.x, crop.h);
-    ctx.fillRect(crop.x + crop.w, crop.y, CANVAS_W - (crop.x + crop.w), crop.h);
-
-    ctx.strokeStyle = '#d9ff3a';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(crop.x, crop.y, crop.w, crop.h);
-
-    const r = cropHandleRadius();
-    [[crop.x, crop.y], [crop.x + crop.w, crop.y], [crop.x, crop.y + crop.h], [crop.x + crop.w, crop.y + crop.h]]
-      .forEach(([cx, cy]) => {
-        ctx.beginPath(); ctx.arc(cx, cy, r * 0.4, 0, Math.PI * 2); ctx.fillStyle = '#d9ff3a'; ctx.fill();
-        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(217,255,58,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
-      });
-    ctx.restore();
-  }
-
-  function drawTwoHandTimer() {
-    if (!twoHandTimerActive) return;
-    const elapsed = performance.now() - twoHandTimerStart;
-    const remaining = Math.max(0, CROP_HOLD_MS - elapsed);
-    const progress = 1 - remaining / CROP_HOLD_MS;
-    const cx = CANVAS_W / 2, cy = Math.min(CANVAS_H * 0.16, 130);
-    const R = Math.max(28, Math.min(CANVAS_W, CANVAS_H) * 0.045);
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
-    ctx.strokeStyle = '#d9ff3a';
-    ctx.lineWidth = 5;
-    ctx.stroke();
-
-    ctx.fillStyle = '#fff';
-    ctx.font = `bold ${Math.round(R * 0.9)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(Math.ceil(remaining / 1000).toString(), cx, cy + 1);
-    ctx.restore();
-  }
-
-  function render() {
-    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-
-    if (phase === 'preview' || phase === 'crop') {
-      drawCoverVideo(ctx);
-      if (phase === 'crop') { drawCropBox(); drawTwoHandTimer(); }
-    } else {
-      drawBubbles();
-
-      for (let pos = 0; pos < order.length; pos++) {
-        const tileId = order[pos];
-        if (heldTile && heldTile.tileId === tileId) continue;
-        const r = cellRect(pos);
-        ctx.drawImage(tileCanvases[tileId], r.x, r.y, r.w, r.h);
-      }
-      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-      ctx.lineWidth = 1;
-      for (let i = 1; i < GRID; i++) {
-        const gx = crop.x + (crop.w / GRID) * i;
-        ctx.beginPath(); ctx.moveTo(gx, crop.y); ctx.lineTo(gx, crop.y + crop.h); ctx.stroke();
-        const gy = crop.y + (crop.h / GRID) * i;
-        ctx.beginPath(); ctx.moveTo(crop.x, gy); ctx.lineTo(crop.x + crop.w, gy); ctx.stroke();
-      }
-      if (heldTile && cursor.visible) {
-        const cw = crop.w / GRID, ch = crop.h / GRID;
-        const dw = cw * 1.08, dh = ch * 1.08;
-        ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 18;
-        ctx.drawImage(tileCanvases[heldTile.tileId], cursor.x - dw / 2, cursor.y - dh / 2, dw, dh);
-        ctx.restore();
-      }
-      if (isSolved() && !solvedShown) {
-        solvedShown = true;
-        stopTimer();
-        instructions.innerHTML = '🎉 Solved!';
-      }
-      if (isSolved()) {
-        ctx.fillStyle = 'rgba(217,255,58,0.95)';
-        ctx.font = `bold ${Math.round(CANVAS_W * 0.032)}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.fillText('SOLVED', CANVAS_W / 2, CANVAS_H * 0.1);
-      }
-    }
-
-    cachedHands.forEach(h => drawHandSkeleton(h.landmarks));
-    if (cursor.visible && phase === 'puzzle') {
-      ctx.beginPath();
-      ctx.arc(cursor.x, cursor.y, 11, 0, Math.PI * 2);
-      ctx.strokeStyle = heldTile ? '#d9ff3a' : 'rgba(255,255,255,0.85)';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-    }
-  }
-
-  // === interaction logic ===
-  function handleSingleHandCrop(hand) {
-    if (!hand) { prevPinching = false; cropGrab = null; return; }
-    const pinching = hand.pinching;
-    cursor.x = hand.pinchPoint.x; cursor.y = hand.pinchPoint.y; cursor.visible = true;
-
-    if (pinching && !prevPinching) {
-      const r = cropHandleRadius();
-      const corners = {
-        tl: { x: crop.x, y: crop.y }, tr: { x: crop.x + crop.w, y: crop.y },
-        bl: { x: crop.x, y: crop.y + crop.h }, br: { x: crop.x + crop.w, y: crop.y + crop.h }
-      };
-      let mode = null;
-      for (const key in corners) { if (dist(cursor, corners[key]) < r) { mode = key; break; } }
-      if (!mode && cursor.x > crop.x && cursor.x < crop.x + crop.w && cursor.y > crop.y && cursor.y < crop.y + crop.h) {
-        mode = 'move';
-      }
-      if (mode) cropGrab = { mode, startX: cursor.x, startY: cursor.y, orig: { ...crop } };
-    } else if (pinching && prevPinching && cropGrab) {
-      const dx = cursor.x - cropGrab.startX, dy = cursor.y - cropGrab.startY;
-      const o = cropGrab.orig;
-      switch (cropGrab.mode) {
-        case 'move': crop.x = o.x + dx; crop.y = o.y + dy; break;
-        case 'tl':   crop.x = o.x + dx; crop.y = o.y + dy; crop.w = o.w - dx; crop.h = o.h - dy; break;
-        case 'tr':   crop.y = o.y + dy; crop.w = o.w + dx; crop.h = o.h - dy; break;
-        case 'bl':   crop.x = o.x + dx; crop.w = o.w - dx; crop.h = o.h + dy; break;
-        case 'br':   crop.w = o.w + dx; crop.h = o.h + dy; break;
-      }
-      clampCrop();
-    } else if (!pinching && prevPinching) {
-      cropGrab = null;
-    }
-    prevPinching = pinching;
-  }
-
-  function handleCropLogic(hands2) {
-    const twoHandMode = hands2.length >= 2 && hands2[0].pinching && hands2[1].pinching;
-
-    if (twoHandMode) {
-      cropGrab = null;
-      const p1 = hands2[0].pinchPoint, p2 = hands2[1].pinchPoint;
-      crop = { x: Math.min(p1.x, p2.x), y: Math.min(p1.y, p2.y), w: Math.abs(p1.x - p2.x), h: Math.abs(p1.y - p2.y) };
-      softClampCrop();
-
-      if (!twoHandTimerActive) { twoHandTimerActive = true; twoHandTimerStart = performance.now(); }
-      if (performance.now() - twoHandTimerStart >= CROP_HOLD_MS) {
-        clampCrop();
-        capturePhoto();
-      }
-      cursor.visible = false;
-      return;
-    }
-
-    twoHandTimerActive = false;
-    handleSingleHandCrop(hands2[0] || null);
-  }
-
-  function handlePuzzleLogic(hand) {
-    if (!hand) { cursor.visible = false; prevPinching = false; return; }
-    cursor.x = hand.pinchPoint.x; cursor.y = hand.pinchPoint.y; cursor.visible = true;
-    const pinching = hand.pinching;
-
-    if (pinching && !prevPinching) {
-      const pos = gridPosAt(cursor.x, cursor.y);
-      if (pos !== -1 && !heldTile) heldTile = { tileId: order[pos], fromPos: pos };
-    } else if (!pinching && prevPinching) {
-      if (heldTile) {
-        const dropPos = gridPosAt(cursor.x, cursor.y);
-        if (dropPos !== -1 && dropPos !== heldTile.fromPos) {
-          const otherTile = order[dropPos];
-          order[dropPos] = heldTile.tileId;
-          order[heldTile.fromPos] = otherTile;
-          moveHistory.push({ fromPos: heldTile.fromPos, toPos: dropPos });
-          updateUndoBtn();
-        }
-        heldTile = null;
-      }
-    }
-    prevPinching = pinching;
-  }
-
-  // === MediaPipe Tasks Vision setup ===
   let handLandmarker = null;
+
   let detectBusy = false;
+
   let frameCount = 0;
 
-  async function initHandTracking() {
-    const filesetResolver = await FilesetResolver.forVisionTasks(
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
-    );
-    handLandmarker = await HandLandmarker.createFromOptions(filesetResolver, {
-      baseOptions: {
-        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
-        delegate: 'CPU'
-      },
-      runningMode: 'VIDEO',
-      numHands: 2,
-      minHandDetectionConfidence: 0.5,
-      minHandPresenceConfidence: 0.5,
-      minTrackingConfidence: 0.5
-    });
-    instructions.textContent = 'Frame yourself, then capture.';
+  let lastVideoTime = -1;
+
+  let modelReady = false;
+
+
+  /* =========================================================
+     BUBBLES 🫧
+  ========================================================= */
+
+  const bubbles = [];
+
+
+  function initBubbles() {
+
+    bubbles.length = 0;
+
+    const count =
+      Math.min(
+        40,
+        Math.floor(
+          Math.min(
+            CANVAS_W,
+            CANVAS_H
+          ) / 20
+        )
+      );
+
+
+    for (
+      let i = 0;
+      i < count;
+      i++
+    ) {
+
+      bubbles.push({
+
+        x:
+          Math.random() *
+          CANVAS_W,
+
+        y:
+          Math.random() *
+          CANVAS_H,
+
+        r:
+          5 +
+          Math.random() *
+          25,
+
+        speed:
+          0.25 +
+          Math.random() *
+          0.8,
+
+        wobble:
+          Math.random() *
+          Math.PI *
+          2,
+
+        wobbleSpeed:
+          0.01 +
+          Math.random() *
+          0.03,
+
+        alpha:
+          0.12 +
+          Math.random() *
+          0.25
+
+      });
+
+    }
+
   }
+
+
+  function drawBubbles() {
+
+    for (const b of bubbles) {
+
+      b.y -= b.speed;
+
+      b.wobble +=
+        b.wobbleSpeed;
+
+
+      const bx =
+        b.x +
+        Math.sin(b.wobble) *
+        14;
+
+
+      if (
+        b.y <
+        -b.r * 2
+      ) {
+
+        b.y =
+          CANVAS_H +
+          b.r * 2;
+
+        b.x =
+          Math.random() *
+          CANVAS_W;
+
+      }
+
+
+      /* Bubble body */
+
+      ctx.beginPath();
+
+      ctx.arc(
+        bx,
+        b.y,
+        b.r,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.fillStyle =
+        `rgba(
+          255,
+          255,
+          255,
+          ${b.alpha * 0.55}
+        )`;
+
+      ctx.fill();
+
+
+      /* Bubble outline */
+
+      ctx.strokeStyle =
+        `rgba(
+          255,
+          255,
+          255,
+          ${Math.min(
+            0.55,
+            b.alpha * 1.4
+          )}
+        )`;
+
+      ctx.lineWidth = 1.2;
+
+      ctx.stroke();
+
+
+      /* Bubble shine */
+
+      ctx.beginPath();
+
+      ctx.arc(
+        bx - b.r * 0.3,
+        b.y - b.r * 0.3,
+        b.r * 0.25,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.fillStyle =
+        `rgba(
+          255,
+          255,
+          255,
+          ${Math.min(
+            0.75,
+            b.alpha * 1.2
+          )}
+        )`;
+
+      ctx.fill();
+
+    }
+
+  }
+
+
+  /* =========================================================
+     VIDEO MAPPING
+  ========================================================= */
+
+  function getCoverTransform() {
+
+    const vw =
+      video.videoWidth || 640;
+
+    const vh =
+      video.videoHeight || 480;
+
+
+    const scale =
+      Math.max(
+        CANVAS_W / vw,
+        CANVAS_H / vh
+      );
+
+
+    const drawW =
+      vw * scale;
+
+    const drawH =
+      vh * scale;
+
+
+    return {
+
+      vw,
+      vh,
+      scale,
+      drawW,
+      drawH,
+
+      offsetX:
+        (CANVAS_W - drawW) / 2,
+
+      offsetY:
+        (CANVAS_H - drawH) / 2
+
+    };
+
+  }
+
+
+  function drawCoverVideo(targetCtx) {
+
+    const t =
+      getCoverTransform();
+
+
+    targetCtx.drawImage(
+
+      video,
+
+      t.offsetX,
+      t.offsetY,
+
+      t.drawW,
+      t.drawH
+
+    );
+
+  }
+
+
+  function toCanvasPoint(lm) {
+
+    const t =
+      getCoverTransform();
+
+
+    return {
+
+      x:
+        t.offsetX +
+        lm.x *
+        t.vw *
+        t.scale,
+
+      y:
+        t.offsetY +
+        lm.y *
+        t.vh *
+        t.scale
+
+    };
+
+  }
+
+
+  function dist(a, b) {
+
+    return Math.hypot(
+
+      a.x - b.x,
+
+      a.y - b.y
+
+    );
+
+  }
+
+
+  /* =========================================================
+     PROCESS HAND
+  ========================================================= */
+
+  function processHand(landmarks) {
+
+    const thumbTip =
+      toCanvasPoint(
+        landmarks[4]
+      );
+
+
+    const indexTip =
+      toCanvasPoint(
+        landmarks[8]
+      );
+
+
+    const wrist =
+      toCanvasPoint(
+        landmarks[0]
+      );
+
+
+    const midMcp =
+      toCanvasPoint(
+        landmarks[9]
+      );
+
+
+    const handScale =
+      Math.max(
+        dist(wrist, midMcp),
+        20
+      );
+
+
+    /*
+      Increased from 0.45 to 0.60.
+
+      This makes pinch detection
+      considerably easier on webcams.
+    */
+
+    const pinching =
+      dist(
+        thumbTip,
+        indexTip
+      ) <
+      handScale * 0.60;
+
+
+    return {
+
+      landmarks,
+
+      thumbTip,
+
+      indexTip,
+
+      wrist,
+
+      midMcp,
+
+      pinching,
+
+      pinchPoint: {
+
+        x:
+          (thumbTip.x +
+           indexTip.x) / 2,
+
+        y:
+          (thumbTip.y +
+           indexTip.y) / 2
+
+      }
+
+    };
+
+  }
+
+
+  /* =========================================================
+     CROP
+  ========================================================= */
+
+  function defaultCrop() {
+
+    const size =
+      Math.min(
+        CANVAS_W,
+        CANVAS_H
+      ) * 0.82;
+
+
+    crop = {
+
+      x:
+        (CANVAS_W - size) / 2,
+
+      y:
+        (CANVAS_H - size) / 2,
+
+      w: size,
+
+      h: size
+
+    };
+
+  }
+
+
+  function clampCrop() {
+
+    const min =
+      Math.min(
+        CANVAS_W,
+        CANVAS_H
+      ) * 0.18;
+
+
+    if (crop.w < min)
+      crop.w = min;
+
+
+    if (crop.h < min)
+      crop.h = min;
+
+
+    if (crop.w > CANVAS_W)
+      crop.w = CANVAS_W;
+
+
+    if (crop.h > CANVAS_H)
+      crop.h = CANVAS_H;
+
+
+    if (crop.x < 0)
+      crop.x = 0;
+
+
+    if (crop.y < 0)
+      crop.y = 0;
+
+
+    if (
+      crop.x +
+      crop.w >
+      CANVAS_W
+    ) {
+
+      crop.x =
+        CANVAS_W -
+        crop.w;
+
+    }
+
+
+    if (
+      crop.y +
+      crop.h >
+      CANVAS_H
+    ) {
+
+      crop.y =
+        CANVAS_H -
+        crop.h;
+
+    }
+
+  }
+
+
+  function softClampCrop() {
+
+    if (crop.x < 0) {
+
+      crop.w += crop.x;
+
+      crop.x = 0;
+
+    }
+
+
+    if (crop.y < 0) {
+
+      crop.h += crop.y;
+
+      crop.y = 0;
+
+    }
+
+
+    if (
+      crop.x +
+      crop.w >
+      CANVAS_W
+    ) {
+
+      crop.w =
+        CANVAS_W -
+        crop.x;
+
+    }
+
+
+    if (
+      crop.y +
+      crop.h >
+      CANVAS_H
+    ) {
+
+      crop.h =
+        CANVAS_H -
+        crop.y;
+
+    }
+
+
+    if (crop.w < 10)
+      crop.w = 10;
+
+
+    if (crop.h < 10)
+      crop.h = 10;
+
+  }
+
+
+  function cellRect(gridPos) {
+
+    const col =
+      gridPos % GRID;
+
+    const row =
+      Math.floor(
+        gridPos / GRID
+      );
+
+
+    const cw =
+      crop.w / GRID;
+
+    const ch =
+      crop.h / GRID;
+
+
+    return {
+
+      x:
+        crop.x +
+        col * cw,
+
+      y:
+        crop.y +
+        row * ch,
+
+      w: cw,
+
+      h: ch
+
+    };
+
+  }
+
+
+  function gridPosAt(x, y) {
+
+    if (
+      x < crop.x ||
+      y < crop.y ||
+      x >= crop.x + crop.w ||
+      y >= crop.y + crop.h
+    ) {
+
+      return -1;
+
+    }
+
+
+    const col =
+      Math.floor(
+        (x - crop.x) /
+        (crop.w / GRID)
+      );
+
+
+    const row =
+      Math.floor(
+        (y - crop.y) /
+        (crop.h / GRID)
+      );
+
+
+    return row * GRID + col;
+
+  }
+
+
+  /* =========================================================
+     PUZZLE TILES
+  ========================================================= */
+
+  function sliceIntoTiles(sourceCanvas) {
+
+    tileCanvases = [];
+
+
+    const cw =
+      crop.w / GRID;
+
+    const ch =
+      crop.h / GRID;
+
+
+    for (
+      let i = 0;
+      i < GRID * GRID;
+      i++
+    ) {
+
+      const col =
+        i % GRID;
+
+      const row =
+        Math.floor(
+          i / GRID
+        );
+
+
+      const tc =
+        document.createElement(
+          "canvas"
+        );
+
+
+      tc.width = cw;
+
+      tc.height = ch;
+
+
+      const tctx =
+        tc.getContext("2d");
+
+
+      tctx.drawImage(
+
+        sourceCanvas,
+
+        crop.x +
+          col * cw,
+
+        crop.y +
+          row * ch,
+
+        cw,
+        ch,
+
+        0,
+        0,
+        cw,
+        ch
+
+      );
+
+
+      tileCanvases.push(tc);
+
+    }
+
+  }
+
+
+  function shuffle() {
+
+    order =
+      [...Array(
+        GRID * GRID
+      ).keys()];
+
+
+    do {
+
+      for (
+        let i =
+          order.length - 1;
+
+        i > 0;
+
+        i--
+      ) {
+
+        const j =
+          Math.floor(
+            Math.random() *
+            (i + 1)
+          );
+
+
+        [
+          order[i],
+          order[j]
+        ] =
+        [
+          order[j],
+          order[i]
+        ];
+
+      }
+
+    }
+    while (isSolved());
+
+
+    solvedShown = false;
+
+    heldTile = null;
+
+    moveHistory = [];
+
+    updateUndoBtn();
+
+  }
+
+
+  function isSolved() {
+
+    return order.every(
+      (v, i) => v === i
+    );
+
+  }
+
+
+  /* =========================================================
+     TIMER
+  ========================================================= */
+
+  function startTimer() {
+
+    stopTimer();
+
+
+    timerStart =
+      Date.now();
+
+
+    timerEl.style.display =
+      "block";
+
+
+    timerInterval =
+      setInterval(
+        updateTimer,
+        250
+      );
+
+
+    updateTimer();
+
+  }
+
+
+  function stopTimer() {
+
+    if (timerInterval) {
+
+      clearInterval(
+        timerInterval
+      );
+
+      timerInterval = null;
+
+    }
+
+  }
+
+
+  function updateTimer() {
+
+    const s =
+      Math.floor(
+        (Date.now() -
+          timerStart) / 1000
+      );
+
+
+    const mm =
+      String(
+        Math.floor(s / 60)
+      ).padStart(2, "0");
+
+
+    const ss =
+      String(
+        s % 60
+      ).padStart(2, "0");
+
+
+    timerEl.textContent =
+      `${mm}:${ss}`;
+
+  }
+
+
+  /* =========================================================
+     CAPTURE
+  ========================================================= */
+
+  function capturePhoto() {
+
+    const shot =
+      document.createElement(
+        "canvas"
+      );
+
+
+    shot.width =
+      CANVAS_W;
+
+    shot.height =
+      CANVAS_H;
+
+
+    drawCoverVideo(
+      shot.getContext("2d")
+    );
+
+
+    sliceIntoTiles(
+      shot
+    );
+
+
+    shuffle();
+
+
+    phase = "puzzle";
+
+
+    twoHandTimerActive =
+      false;
+
+
+    cropGrab = null;
+
+
+    captureBtnWrap.style.display =
+      "none";
+
+
+    cropControls.style.display =
+      "none";
+
+
+    postControls.style.display =
+      "flex";
+
+
+    stage.classList.add(
+      "puzzle-mode"
+    );
+
+
+    initBubbles();
+
+
+    startTimer();
+
+
+    instructions.textContent =
+      "Pinch a tile and drag it onto another tile to swap.";
+
+  }
+
+
+  function enterCropPhase() {
+
+    phase = "crop";
+
+
+    defaultCrop();
+
+
+    twoHandTimerActive =
+      false;
+
+
+    cropGrab = null;
+
+
+    captureBtnWrap.style.display =
+      "none";
+
+
+    cropControls.style.display =
+      "flex";
+
+
+    instructions.textContent =
+      "Pinch a corner to resize, or pinch inside the box to move it.";
+
+  }
+
+
+  function backToPreview() {
+
+    phase = "preview";
+
+
+    stopTimer();
+
+
+    timerEl.style.display =
+      "none";
+
+
+    twoHandTimerActive =
+      false;
+
+
+    cropGrab = null;
+
+
+    heldTile = null;
+
+
+    captureBtnWrap.style.display =
+      "flex";
+
+
+    cropControls.style.display =
+      "none";
+
+
+    postControls.style.display =
+      "none";
+
+
+    stage.classList.remove(
+      "puzzle-mode"
+    );
+
+
+    instructions.textContent =
+      "Frame yourself, then capture.";
+
+  }
+
+
+  /* =========================================================
+     UNDO
+  ========================================================= */
+
+  function updateUndoBtn() {
+
+    undoBtn.disabled =
+      moveHistory.length === 0;
+
+  }
+
+
+  function undoMove() {
+
+    if (
+      moveHistory.length === 0 ||
+      phase !== "puzzle"
+    ) {
+
+      return;
+
+    }
+
+
+    const m =
+      moveHistory.pop();
+
+
+    const temp =
+      order[m.fromPos];
+
+
+    order[m.fromPos] =
+      order[m.toPos];
+
+
+    order[m.toPos] =
+      temp;
+
+
+    heldTile = null;
+
+
+    solvedShown =
+      isSolved();
+
+
+    updateUndoBtn();
+
+
+    instructions.textContent =
+      "Undid last move.";
+
+  }
+
+
+  /* =========================================================
+     BUTTON EVENTS
+  ========================================================= */
+
+  captureBtn.addEventListener(
+    "click",
+    enterCropPhase
+  );
+
+
+  confirmCropBtn.addEventListener(
+    "click",
+    () => {
+
+      clampCrop();
+
+      capturePhoto();
+
+    }
+  );
+
+
+  cancelCropBtn.addEventListener(
+    "click",
+    backToPreview
+  );
+
+
+  shuffleBtn.addEventListener(
+    "click",
+    () => {
+
+      shuffle();
+
+      startTimer();
+
+      instructions.textContent =
+        "Shuffled! Solve it again.";
+
+    }
+  );
+
+
+  undoBtn.addEventListener(
+    "click",
+    undoMove
+  );
+
+
+  retakeBtn.addEventListener(
+    "click",
+    backToPreview
+  );
+
+
+  /* =========================================================
+     HAND SKELETON
+  ========================================================= */
+
+  function drawHandSkeleton(
+    landmarks
+  ) {
+
+    const connections = [
+
+      [0,1],
+      [1,2],
+      [2,3],
+      [3,4],
+
+      [0,5],
+      [5,6],
+      [6,7],
+      [7,8],
+
+      [5,9],
+      [9,10],
+      [10,11],
+      [11,12],
+
+      [9,13],
+      [13,14],
+      [14,15],
+      [15,16],
+
+      [13,17],
+      [17,18],
+      [18,19],
+      [19,20],
+
+      [0,17]
+
+    ];
+
+
+    ctx.strokeStyle =
+      "rgba(7,89,133,0.85)";
+
+
+    ctx.lineWidth = 2;
+
+
+    ctx.beginPath();
+
+
+    connections.forEach(
+      ([a,b]) => {
+
+        const pa =
+          toCanvasPoint(
+            landmarks[a]
+          );
+
+
+        const pb =
+          toCanvasPoint(
+            landmarks[b]
+          );
+
+
+        ctx.moveTo(
+          pa.x,
+          pa.y
+        );
+
+
+        ctx.lineTo(
+          pb.x,
+          pb.y
+        );
+
+      }
+    );
+
+
+    ctx.stroke();
+
+
+    landmarks.forEach(
+      lm => {
+
+        const p =
+          toCanvasPoint(lm);
+
+
+        ctx.fillStyle =
+          "rgba(255,255,255,0.9)";
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+          p.x,
+          p.y,
+          2.5,
+          0,
+          Math.PI * 2
+        );
+
+
+        ctx.fill();
+
+      }
+    );
+
+  }
+
+
+  /* =========================================================
+     CROP DRAWING
+  ========================================================= */
+
+  function cropHandleRadius() {
+
+    return Math.max(
+      24,
+
+      Math.min(
+        CANVAS_W,
+        CANVAS_H
+      ) * 0.032
+    );
+
+  }
+
+
+  function drawCropBox() {
+
+    ctx.save();
+
+
+    /* Darken outside crop */
+
+    ctx.fillStyle =
+      "rgba(7,89,133,0.20)";
+
+
+    ctx.fillRect(
+      0,
+      0,
+      CANVAS_W,
+      crop.y
+    );
+
+
+    ctx.fillRect(
+      0,
+      crop.y + crop.h,
+      CANVAS_W,
+      CANVAS_H -
+        (crop.y + crop.h)
+    );
+
+
+    ctx.fillRect(
+      0,
+      crop.y,
+      crop.x,
+      crop.h
+    );
+
+
+    ctx.fillRect(
+      crop.x + crop.w,
+      crop.y,
+      CANVAS_W -
+        (crop.x + crop.w),
+      crop.h
+    );
+
+
+    /* Crop border */
+
+    ctx.strokeStyle =
+      "#ffffff";
+
+
+    ctx.lineWidth = 3;
+
+
+    ctx.strokeRect(
+      crop.x,
+      crop.y,
+      crop.w,
+      crop.h
+    );
+
+
+    /* Handles */
+
+    const r =
+      cropHandleRadius();
+
+
+    [
+      [crop.x, crop.y],
+
+      [
+        crop.x + crop.w,
+        crop.y
+      ],
+
+      [
+        crop.x,
+        crop.y + crop.h
+      ],
+
+      [
+        crop.x + crop.w,
+        crop.y + crop.h
+      ]
+
+    ].forEach(
+      ([cx,cy]) => {
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+          cx,
+          cy,
+          r * 0.4,
+          0,
+          Math.PI * 2
+        );
+
+
+        ctx.fillStyle =
+          "#ffffff";
+
+
+        ctx.fill();
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+          cx,
+          cy,
+          r,
+          0,
+          Math.PI * 2
+        );
+
+
+        ctx.strokeStyle =
+          "rgba(255,255,255,0.65)";
+
+
+        ctx.lineWidth = 1.5;
+
+
+        ctx.stroke();
+
+      }
+    );
+
+
+    ctx.restore();
+
+  }
+
+
+  /* =========================================================
+     TWO-HAND TIMER
+  ========================================================= */
+
+  function drawTwoHandTimer() {
+
+    if (!twoHandTimerActive)
+      return;
+
+
+    const elapsed =
+      performance.now() -
+      twoHandTimerStart;
+
+
+    const remaining =
+      Math.max(
+        0,
+        CROP_HOLD_MS -
+        elapsed
+      );
+
+
+    const progress =
+      1 -
+      remaining /
+      CROP_HOLD_MS;
+
+
+    const cx =
+      CANVAS_W / 2;
+
+
+    const cy =
+      Math.min(
+        CANVAS_H * 0.16,
+        130
+      );
+
+
+    const R =
+      Math.max(
+        28,
+        Math.min(
+          CANVAS_W,
+          CANVAS_H
+        ) * 0.045
+      );
+
+
+    ctx.save();
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+      cx,
+      cy,
+      R,
+      0,
+      Math.PI * 2
+    );
+
+
+    ctx.fillStyle =
+      "rgba(255,255,255,0.75)";
+
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+      cx,
+      cy,
+      R,
+      -Math.PI / 2,
+      -Math.PI / 2 +
+        progress *
+        Math.PI * 2
+    );
+
+
+    ctx.strokeStyle =
+      "#075985";
+
+
+    ctx.lineWidth = 5;
+
+
+    ctx.stroke();
+
+
+    ctx.fillStyle =
+      "#075985";
+
+
+    ctx.font =
+      `bold ${
+        Math.round(R * 0.9)
+      }px sans-serif`;
+
+
+    ctx.textAlign =
+      "center";
+
+
+    ctx.textBaseline =
+      "middle";
+
+
+    ctx.fillText(
+      Math.ceil(
+        remaining / 1000
+      ).toString(),
+
+      cx,
+
+      cy + 1
+    );
+
+
+    ctx.restore();
+
+  }
+
+
+  /* =========================================================
+     MAIN RENDER
+  ========================================================= */
+
+  function render() {
+
+    ctx.clearRect(
+      0,
+      0,
+      CANVAS_W,
+      CANVAS_H
+    );
+
+
+    /* CAMERA */
+
+    if (
+      phase === "preview" ||
+      phase === "crop"
+    ) {
+
+      drawCoverVideo(ctx);
+
+
+      if (
+        phase === "crop"
+      ) {
+
+        drawCropBox();
+
+        drawTwoHandTimer();
+
+      }
+
+    }
+
+    /* PUZZLE */
+
+    else {
+
+      drawBubbles();
+
+
+      /* Draw puzzle tiles */
+
+      for (
+        let pos = 0;
+        pos < order.length;
+        pos++
+      ) {
+
+        const tileId =
+          order[pos];
+
+
+        if (
+          heldTile &&
+          heldTile.tileId === tileId
+        ) {
+
+          continue;
+
+        }
+
+
+        const r =
+          cellRect(pos);
+
+
+        ctx.drawImage(
+
+          tileCanvases[tileId],
+
+          r.x,
+          r.y,
+          r.w,
+          r.h
+
+        );
+
+      }
+
+
+      /* Grid */
+
+      ctx.strokeStyle =
+        "rgba(255,255,255,0.75)";
+
+
+      ctx.lineWidth = 1;
+
+
+      for (
+        let i = 1;
+        i < GRID;
+        i++
+      ) {
+
+        const gx =
+          crop.x +
+          (crop.w / GRID) *
+          i;
+
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+          gx,
+          crop.y
+        );
+
+
+        ctx.lineTo(
+          gx,
+          crop.y +
+          crop.h
+        );
+
+
+        ctx.stroke();
+
+
+        const gy =
+          crop.y +
+          (crop.h / GRID) *
+          i;
+
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+          crop.x,
+          gy
+        );
+
+
+        ctx.lineTo(
+          crop.x +
+          crop.w,
+          gy
+        );
+
+
+        ctx.stroke();
+
+      }
+
+
+      /* Held tile */
+
+      if (
+        heldTile &&
+        cursor.visible
+      ) {
+
+        const cw =
+          crop.w / GRID;
+
+
+        const ch =
+          crop.h / GRID;
+
+
+        const dw =
+          cw * 1.08;
+
+
+        const dh =
+          ch * 1.08;
+
+
+        ctx.save();
+
+
+        ctx.shadowColor =
+          "rgba(7,89,133,0.35)";
+
+
+        ctx.shadowBlur = 18;
+
+
+        ctx.drawImage(
+
+          tileCanvases[
+            heldTile.tileId
+          ],
+
+          cursor.x -
+            dw / 2,
+
+          cursor.y -
+            dh / 2,
+
+          dw,
+          dh
+
+        );
+
+
+        ctx.restore();
+
+      }
+
+
+      /* Solved */
+
+      if (
+        isSolved() &&
+        !solvedShown
+      ) {
+
+        solvedShown = true;
+
+        stopTimer();
+
+        instructions.innerHTML =
+          "🎉 Puzzle solved!";
+
+      }
+
+
+      if (
+        isSolved()
+      ) {
+
+        ctx.fillStyle =
+          "rgba(255,255,255,0.95)";
+
+
+        ctx.font =
+          `bold ${
+            Math.round(
+              CANVAS_W * 0.032
+            )
+          }px sans-serif`;
+
+
+        ctx.textAlign =
+          "center";
+
+
+        ctx.fillText(
+          "SOLVED 🫧",
+
+          CANVAS_W / 2,
+
+          CANVAS_H * 0.1
+        );
+
+      }
+
+    }
+
+
+    /* Hand skeleton */
+
+    cachedHands.forEach(
+      h =>
+        drawHandSkeleton(
+          h.landmarks
+        )
+    );
+
+
+    /* Cursor */
+
+    if (
+      cursor.visible &&
+      phase === "puzzle"
+    ) {
+
+      ctx.beginPath();
+
+
+      ctx.arc(
+        cursor.x,
+        cursor.y,
+        11,
+        0,
+        Math.PI * 2
+      );
+
+
+      ctx.strokeStyle =
+        heldTile
+          ? "#ffffff"
+          : "rgba(255,255,255,0.9)";
+
+
+      ctx.lineWidth = 3;
+
+
+      ctx.stroke();
+
+    }
+
+  }
+
+
+  /* =========================================================
+     CROP HAND LOGIC
+  ========================================================= */
+
+  function handleSingleHandCrop(
+    hand
+  ) {
+
+    if (!hand) {
+
+      prevPinching =
+        false;
+
+      cropGrab = null;
+
+      cursor.visible =
+        false;
+
+      return;
+
+    }
+
+
+    const pinching =
+      hand.pinching;
+
+
+    cursor.x =
+      hand.pinchPoint.x;
+
+
+    cursor.y =
+      hand.pinchPoint.y;
+
+
+    cursor.visible =
+      true;
+
+
+    /* Start pinch */
+
+    if (
+      pinching &&
+      !prevPinching
+    ) {
+
+      const r =
+        cropHandleRadius();
+
+
+      const corners = {
+
+        tl: {
+          x: crop.x,
+          y: crop.y
+        },
+
+        tr: {
+          x:
+            crop.x +
+            crop.w,
+
+          y: crop.y
+        },
+
+        bl: {
+          x: crop.x,
+
+          y:
+            crop.y +
+            crop.h
+        },
+
+        br: {
+          x:
+            crop.x +
+            crop.w,
+
+          y:
+            crop.y +
+            crop.h
+        }
+
+      };
+
+
+      let mode = null;
+
+
+      for (
+        const key in corners
+      ) {
+
+        if (
+          dist(
+            cursor,
+            corners[key]
+          ) < r
+        ) {
+
+          mode = key;
+
+          break;
+
+        }
+
+      }
+
+
+      if (
+        !mode &&
+        cursor.x > crop.x &&
+        cursor.x <
+          crop.x + crop.w &&
+        cursor.y > crop.y &&
+        cursor.y <
+          crop.y + crop.h
+      ) {
+
+        mode = "move";
+
+      }
+
+
+      if (mode) {
+
+        cropGrab = {
+
+          mode,
+
+          startX:
+            cursor.x,
+
+          startY:
+            cursor.y,
+
+          orig:
+            {
+              ...crop
+            }
+
+        };
+
+      }
+
+    }
+
+
+    /* Continue pinch */
+
+    else if (
+      pinching &&
+      prevPinching &&
+      cropGrab
+    ) {
+
+      const dx =
+        cursor.x -
+        cropGrab.startX;
+
+
+      const dy =
+        cursor.y -
+        cropGrab.startY;
+
+
+      const o =
+        cropGrab.orig;
+
+
+      switch (
+        cropGrab.mode
+      ) {
+
+        case "move":
+
+          crop.x =
+            o.x + dx;
+
+          crop.y =
+            o.y + dy;
+
+          break;
+
+
+        case "tl":
+
+          crop.x =
+            o.x + dx;
+
+          crop.y =
+            o.y + dy;
+
+          crop.w =
+            o.w - dx;
+
+          crop.h =
+            o.h - dy;
+
+          break;
+
+
+        case "tr":
+
+          crop.y =
+            o.y + dy;
+
+          crop.w =
+            o.w + dx;
+
+          crop.h =
+            o.h - dy;
+
+          break;
+
+
+        case "bl":
+
+          crop.x =
+            o.x + dx;
+
+          crop.w =
+            o.w - dx;
+
+          crop.h =
+            o.h + dy;
+
+          break;
+
+
+        case "br":
+
+          crop.w =
+            o.w + dx;
+
+          crop.h =
+            o.h + dy;
+
+          break;
+
+      }
+
+
+      clampCrop();
+
+    }
+
+
+    /* Release */
+
+    else if (
+      !pinching &&
+      prevPinching
+    ) {
+
+      cropGrab = null;
+
+    }
+
+
+    prevPinching =
+      pinching;
+
+  }
+
+
+  /* =========================================================
+     TWO-HAND CROP LOGIC
+  ========================================================= */
+
+  function handleCropLogic(
+    hands2
+  ) {
+
+    const twoHandMode =
+      hands2.length >= 2 &&
+      hands2[0].pinching &&
+      hands2[1].pinching;
+
+
+    if (twoHandMode) {
+
+      cropGrab = null;
+
+
+      const p1 =
+        hands2[0].pinchPoint;
+
+
+      const p2 =
+        hands2[1].pinchPoint;
+
+
+      crop = {
+
+        x:
+          Math.min(
+            p1.x,
+            p2.x
+          ),
+
+        y:
+          Math.min(
+            p1.y,
+            p2.y
+          ),
+
+        w:
+          Math.abs(
+            p1.x -
+            p2.x
+          ),
+
+        h:
+          Math.abs(
+            p1.y -
+            p2.y
+          )
+
+      };
+
+
+      softClampCrop();
+
+
+      if (
+        !twoHandTimerActive
+      ) {
+
+        twoHandTimerActive =
+          true;
+
+        twoHandTimerStart =
+          performance.now();
+
+      }
+
+
+      if (
+        performance.now() -
+        twoHandTimerStart >=
+        CROP_HOLD_MS
+      ) {
+
+        clampCrop();
+
+        capturePhoto();
+
+      }
+
+
+      cursor.visible =
+        false;
+
+
+      return;
+
+    }
+
+
+    twoHandTimerActive =
+      false;
+
+
+    handleSingleHandCrop(
+      hands2[0] || null
+    );
+
+  }
+
+
+  /* =========================================================
+     PUZZLE HAND LOGIC
+  ========================================================= */
+
+  function handlePuzzleLogic(
+    hand
+  ) {
+
+    if (!hand) {
+
+      cursor.visible =
+        false;
+
+      prevPinching =
+        false;
+
+      return;
+
+    }
+
+
+    cursor.x =
+      hand.pinchPoint.x;
+
+
+    cursor.y =
+      hand.pinchPoint.y;
+
+
+    cursor.visible =
+      true;
+
+
+    const pinching =
+      hand.pinching;
+
+
+    /* Pick up */
+
+    if (
+      pinching &&
+      !prevPinching
+    ) {
+
+      const pos =
+        gridPosAt(
+          cursor.x,
+          cursor.y
+        );
+
+
+      if (
+        pos !== -1 &&
+        !heldTile
+      ) {
+
+        heldTile = {
+
+          tileId:
+            order[pos],
+
+          fromPos:
+            pos
+
+        };
+
+      }
+
+    }
+
+
+    /* Release */
+
+    else if (
+      !pinching &&
+      prevPinching
+    ) {
+
+      if (heldTile) {
+
+        const dropPos =
+          gridPosAt(
+            cursor.x,
+            cursor.y
+          );
+
+
+        if (
+          dropPos !== -1 &&
+          dropPos !==
+            heldTile.fromPos
+        ) {
+
+          const otherTile =
+            order[dropPos];
+
+
+          order[dropPos] =
+            heldTile.tileId;
+
+
+          order[
+            heldTile.fromPos
+          ] =
+            otherTile;
+
+
+          moveHistory.push({
+
+            fromPos:
+              heldTile.fromPos,
+
+            toPos:
+              dropPos
+
+          });
+
+
+          updateUndoBtn();
+
+        }
+
+
+        heldTile = null;
+
+      }
+
+    }
+
+
+    prevPinching =
+      pinching;
+
+  }
+
+
+  /* =========================================================
+     MEDIAPIPE SETUP
+  ========================================================= */
+
+  async function initHandTracking() {
+
+    if (
+      !window.FilesetResolver ||
+      !window.HandLandmarker
+    ) {
+
+      throw new Error(
+        "MediaPipe Tasks Vision did not load. Check your internet connection."
+      );
+
+    }
+
+
+    const filesetResolver =
+      await FilesetResolver.forVisionTasks(
+
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+
+      );
+
+
+    handLandmarker =
+      await HandLandmarker.createFromOptions(
+
+        filesetResolver,
+
+        {
+
+          baseOptions: {
+
+            modelAssetPath:
+              "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+
+            delegate:
+              "CPU"
+
+          },
+
+
+          runningMode:
+            "VIDEO",
+
+
+          numHands:
+            2,
+
+
+          /*
+            Lower thresholds make detection
+            friendlier to normal webcams.
+          */
+
+          minHandDetectionConfidence:
+            0.35,
+
+          minHandPresenceConfidence:
+            0.35,
+
+          minTrackingConfidence:
+            0.35
+
+        }
+
+      );
+
+
+    modelReady = true;
+
+
+    instructions.textContent =
+      "Hand tracking ready — pinch with your thumb + index finger.";
+
+  }
+
+
+  /* =========================================================
+     CAMERA LOOP
+  ========================================================= */
 
   async function cameraLoop() {
-    if (!video.videoWidth) { requestAnimationFrame(cameraLoop); return; }
-    render();
-    if (!handLandmarker || detectBusy || frameCount++ % 3 !== 0) { requestAnimationFrame(cameraLoop); return; }
-    detectBusy = true;
-    try {
-      const res = handLandmarker.detectForVideo(video, performance.now());
-      cachedHands = (res.landmarks || []).map(processHand);
-      if (phase === 'crop') handleCropLogic(cachedHands);
-      else if (phase === 'puzzle') handlePuzzleLogic(cachedHands[0] || null);
-    } finally {
-      detectBusy = false;
+
+    if (
+      !video.videoWidth ||
+      video.readyState < 2
+    ) {
+
+      requestAnimationFrame(
+        cameraLoop
+      );
+
+      return;
+
     }
-    requestAnimationFrame(cameraLoop);
+
+
+    render();
+
+
+    /*
+      Don't try to detect hands
+      until the model is ready.
+    */
+
+    if (
+      !modelReady ||
+      !handLandmarker ||
+      detectBusy ||
+      frameCount++ % 2 !== 0
+    ) {
+
+      requestAnimationFrame(
+        cameraLoop
+      );
+
+      return;
+
+    }
+
+
+    /*
+      IMPORTANT FIX:
+
+      MediaPipe VIDEO mode needs
+      monotonically increasing
+      timestamps.
+
+      video.currentTime gives us
+      the timestamp of the actual
+      webcam video frame.
+    */
+
+    const videoTime =
+      video.currentTime;
+
+
+    if (
+      !Number.isFinite(
+        videoTime
+      ) ||
+      videoTime <=
+        lastVideoTime
+    ) {
+
+      requestAnimationFrame(
+        cameraLoop
+      );
+
+      return;
+
+    }
+
+
+    lastVideoTime =
+      videoTime;
+
+
+    detectBusy = true;
+
+
+    try {
+
+      const timestampMs =
+        Math.round(
+          videoTime * 1000
+        );
+
+
+      const res =
+        handLandmarker.detectForVideo(
+
+          video,
+
+          timestampMs
+
+        );
+
+
+      cachedHands =
+        (res.landmarks || [])
+          .map(processHand);
+
+
+      if (
+        phase === "crop"
+      ) {
+
+        handleCropLogic(
+          cachedHands
+        );
+
+      }
+
+      else if (
+        phase === "puzzle"
+      ) {
+
+        handlePuzzleLogic(
+          cachedHands[0] || null
+        );
+
+      }
+
+    }
+
+    catch (err) {
+
+      console.error(
+        "Hand detection error:",
+        err
+      );
+
+
+      instructions.textContent =
+        "Hand tracking error — keep your hand visible and well lit.";
+
+    }
+
+    finally {
+
+      detectBusy = false;
+
+    }
+
+
+    requestAnimationFrame(
+      cameraLoop
+    );
+
   }
 
-  // start camera
-  navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 480 }, height: { ideal: 360 }, facingMode: 'user' }, audio: false })
-    .then(stream => {
-      video.srcObject = stream;
-      video.play();
-      initHandTracking().catch(err => {
-        instructions.textContent = 'Hand tracking failed to load: ' + err.message;
-      });
-      requestAnimationFrame(cameraLoop);
-    })
-    .catch(err => { instructions.textContent = 'Camera access failed: ' + err.message; });
 
-  window.addEventListener('resize', () => {
-    const oldW = CANVAS_W, oldH = CANVAS_H;
-    resizeCanvas();
-    if (phase === 'crop' && oldW && oldH) {
-      crop.x *= CANVAS_W / oldW; crop.w *= CANVAS_W / oldW;
-      crop.y *= CANVAS_H / oldH; crop.h *= CANVAS_H / oldH;
-      clampCrop();
+  /* =========================================================
+     START CAMERA
+  ========================================================= */
+
+  navigator.mediaDevices
+    .getUserMedia({
+
+      video: {
+
+        width: {
+          ideal: 640,
+          min: 320
+        },
+
+        height: {
+          ideal: 480,
+          min: 240
+        },
+
+        facingMode:
+          "user"
+
+      },
+
+      audio: false
+
+    })
+
+    .then(
+      async stream => {
+
+        video.srcObject =
+          stream;
+
+
+        /*
+          Wait until the browser
+          knows the camera dimensions.
+        */
+
+        await new Promise(
+          resolve => {
+
+            if (
+              video.readyState >= 1
+            ) {
+
+              resolve();
+
+            }
+
+            else {
+
+              video.addEventListener(
+                "loadedmetadata",
+                resolve,
+                {
+                  once: true
+                }
+              );
+
+            }
+
+          }
+        );
+
+
+        await video.play();
+
+
+        /*
+          Load MediaPipe before
+          starting the detection loop.
+        */
+
+        await initHandTracking();
+
+
+        lastVideoTime = -1;
+
+
+        requestAnimationFrame(
+          cameraLoop
+        );
+
+      }
+    )
+
+    .catch(
+      err => {
+
+        console.error(err);
+
+
+        instructions.textContent =
+          "Camera/hand tracking failed: " +
+          err.message;
+
+      }
+    );
+
+
+  /* =========================================================
+     RESIZE
+  ========================================================= */
+
+  window.addEventListener(
+    "resize",
+    () => {
+
+      const oldW =
+        CANVAS_W;
+
+      const oldH =
+        CANVAS_H;
+
+
+      resizeCanvas();
+
+
+      if (
+        phase === "crop" &&
+        oldW &&
+        oldH
+      ) {
+
+        crop.x *=
+          CANVAS_W /
+          oldW;
+
+
+        crop.w *=
+          CANVAS_W /
+          oldW;
+
+
+        crop.y *=
+          CANVAS_H /
+          oldH;
+
+
+        crop.h *=
+          CANVAS_H /
+          oldH;
+
+
+        clampCrop();
+
+      }
+
+
+      if (
+        phase === "puzzle"
+      ) {
+
+        initBubbles();
+
+      }
+
     }
-    if (phase === 'puzzle') initBubbles();
-  });
+  );
+
+
 })();
+
 </script>
+
 </body>
 </html>
 
