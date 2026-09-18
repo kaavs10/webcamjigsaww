@@ -1,1928 +1,3598 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Live Puzzle — Hand Tracking</title>
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+>
+
+<title>Ocean Jigsaw Puzzle</title>
 
 <style>
-  :root { --accent: #ffffff; }
 
-  * {
-    box-sizing: border-box;
-  }
+:root {
+  --blue-dark: #075985;
+  --blue: #0ea5e9;
+  --blue-light: #dff7ff;
+  --white: #ffffff;
+}
 
-  html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: linear-gradient(
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+
+  background:
+    linear-gradient(
       135deg,
-      #dff7ff 0%,
-      #aee7f7 45%,
-      #8bd3ec 100%
+      #e8faff 0%,
+      #c9f2ff 45%,
+      #9bdff3 100%
     );
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
+}
 
-  #stage {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-  }
 
-  video {
-    display: none;
-  }
+/* =========================================================
+   MAIN STAGE
+========================================================= */
 
-  canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
+#stage {
 
-  #stage.puzzle-mode {
-    background: linear-gradient(
+  position: fixed;
+
+  inset: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      #e8faff 0%,
+      #c9f2ff 45%,
+      #9bdff3 100%
+    );
+}
+
+#stage.puzzle-mode {
+
+  background:
+    linear-gradient(
       135deg,
       #dff7ff 0%,
       #b8ecfa 45%,
       #8bd3ec 100%
     );
-  }
+}
 
-  .top-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    padding: max(14px, env(safe-area-inset-top)) 16px 10px;
-    text-align: center;
-    background: linear-gradient(
+
+/* =========================================================
+   VIDEO + CANVAS
+========================================================= */
+
+video {
+  display: none;
+}
+
+canvas {
+
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  display: block;
+}
+
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.top-bar {
+
+  position: fixed;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  padding:
+    max(18px, env(safe-area-inset-top))
+    20px
+    14px;
+
+  text-align: center;
+
+  background:
+    linear-gradient(
       to bottom,
-      rgba(0,0,0,0.55),
-      transparent
+      rgba(255,255,255,0.82),
+      rgba(255,255,255,0)
     );
-    z-index: 10;
-    pointer-events: none;
+
+  z-index: 20;
+
+  pointer-events: none;
+}
+
+.top-bar h1 {
+
+  margin: 0 0 5px;
+
+  color: var(--blue-dark);
+
+  font-size: 1.05rem;
+
+  letter-spacing: 0.18em;
+
+  text-transform: uppercase;
+
+  font-weight: 800;
+}
+
+.top-bar p {
+
+  margin: 0 auto;
+
+  color: #164e63;
+
+  font-size: 0.8rem;
+
+  max-width: 600px;
+}
+
+
+/* =========================================================
+   TIMER
+========================================================= */
+
+.timer {
+
+  position: fixed;
+
+  top:
+    max(18px, env(safe-area-inset-top));
+
+  right: 18px;
+
+  z-index: 30;
+
+  display: none;
+
+  padding: 9px 16px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255,255,255,0.82);
+
+  color: var(--blue-dark);
+
+  font-size: 1rem;
+
+  font-weight: 800;
+
+  letter-spacing: 0.06em;
+
+  font-variant-numeric: tabular-nums;
+
+  box-shadow:
+    0 5px 18px rgba(0,80,120,0.15);
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.bottom-bar {
+
+  position: fixed;
+
+  left: 0;
+  right: 0;
+
+  bottom:
+    max(22px, env(safe-area-inset-bottom));
+
+  display: flex;
+
+  gap: 10px;
+
+  justify-content: center;
+
+  flex-wrap: wrap;
+
+  z-index: 25;
+}
+
+button {
+
+  border: none;
+
+  border-radius: 999px;
+
+  padding: 13px 23px;
+
+  background: #ffffff;
+
+  color: var(--blue-dark);
+
+  font-size: 0.9rem;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 18px rgba(0,80,120,0.2);
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+button:hover {
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 7px 22px rgba(0,80,120,0.25);
+}
+
+button:active {
+
+  transform: translateY(0);
+}
+
+button.secondary {
+
+  background:
+    rgba(255,255,255,0.55);
+
+  border:
+    1.5px solid rgba(7,89,133,0.35);
+
+  color: var(--blue-dark);
+}
+
+button:disabled {
+
+  opacity: 0.4;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+
+/* =========================================================
+   POPUP OVERLAY
+========================================================= */
+
+.modal-overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 100;
+
+  display: none;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 20px;
+
+  background:
+    rgba(4,55,75,0.35);
+
+  backdrop-filter:
+    blur(8px);
+
+  -webkit-backdrop-filter:
+    blur(8px);
+}
+
+
+/* =========================================================
+   GENERAL POPUP
+========================================================= */
+
+.modal {
+
+  width: min(420px, 92vw);
+
+  padding: 30px 26px;
+
+  border-radius: 28px;
+
+  background:
+    rgba(255,255,255,0.96);
+
+  box-shadow:
+    0 20px 70px rgba(0,70,100,0.3);
+
+  text-align: center;
+
+  animation:
+    popupIn 0.3s ease;
+}
+
+@keyframes popupIn {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      scale(0.9)
+      translateY(15px);
   }
 
-  .top-bar h1 {
-    font-size: 0.95rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: #075985;
-    margin: 0 0 3px;
+  to {
+
+    opacity: 1;
+
+    transform:
+      scale(1)
+      translateY(0);
+  }
+}
+
+
+/* =========================================================
+   NAME POPUP
+========================================================= */
+
+.name-icon {
+
+  font-size: 3rem;
+
+  margin-bottom: 8px;
+}
+
+.modal h2 {
+
+  margin: 0 0 8px;
+
+  color: var(--blue-dark);
+
+  font-size: 1.7rem;
+}
+
+.modal p {
+
+  margin: 0 0 20px;
+
+  color: #475569;
+
+  font-size: 0.95rem;
+}
+
+#playerName {
+
+  width: 100%;
+
+  padding: 14px 16px;
+
+  border-radius: 15px;
+
+  border:
+    2px solid #bae6fd;
+
+  outline: none;
+
+  font-size: 1rem;
+
+  text-align: center;
+
+  color: var(--blue-dark);
+
+  background: #f0fbff;
+
+  margin-bottom: 13px;
+}
+
+#playerName:focus {
+
+  border-color:
+    #38bdf8;
+}
+
+#startGameBtn {
+
+  width: 100%;
+}
+
+
+/* =========================================================
+   RESULT POPUP
+========================================================= */
+
+.result-modal {
+
+  width: min(450px, 92vw);
+
+  padding: 38px 28px;
+
+  border-radius: 30px;
+
+  background:
+    rgba(255,255,255,0.98);
+
+  text-align: center;
+
+  box-shadow:
+    0 20px 80px rgba(0,70,100,0.35);
+
+  animation:
+    popupIn 0.35s ease;
+}
+
+.result-icon {
+
+  font-size: 4rem;
+
+  margin-bottom: 8px;
+
+  animation:
+    resultBounce 0.7s ease;
+}
+
+@keyframes resultBounce {
+
+  0% {
+    transform: scale(0.5);
   }
 
-  .top-bar p {
-    color: #164e63;
-    font-size: 0.78rem;
-    margin: 0 auto;
-    max-width: 480px;
+  65% {
+    transform: scale(1.12);
   }
 
-  .timer {
-    position: fixed;
-    top: max(14px, env(safe-area-inset-top));
-    right: 16px;
-    z-index: 11;
-    font-weight: 700;
-    font-size: 1rem;
-    background: rgba(255,255,255,0.62);
-    color: #075985;
-    padding: 8px 14px;
-    border-radius: 999px;
-    display: none;
-    letter-spacing: 0.05em;
-    font-variant-numeric: tabular-nums;
+  100% {
+    transform: scale(1);
+  }
+}
+
+.result-title {
+
+  margin: 0;
+
+  color: var(--blue-dark);
+
+  font-size: 2rem;
+
+  font-weight: 900;
+}
+
+.result-details {
+
+  margin-top: 10px;
+
+  color: #64748b;
+
+  font-size: 0.95rem;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   SCOREBOARD
+========================================================= */
+
+#scoreboard {
+
+  position: fixed;
+
+  top: 80px;
+
+  left: 18px;
+
+  z-index: 30;
+
+  width: min(270px, 40vw);
+
+  max-height: 45vh;
+
+  overflow: auto;
+
+  padding: 16px;
+
+  border-radius: 20px;
+
+  background:
+    rgba(255,255,255,0.75);
+
+  backdrop-filter:
+    blur(10px);
+
+  -webkit-backdrop-filter:
+    blur(10px);
+
+  box-shadow:
+    0 8px 30px rgba(0,70,100,0.15);
+}
+
+#scoreboard h3 {
+
+  margin: 0 0 10px;
+
+  color: var(--blue-dark);
+
+  font-size: 0.95rem;
+
+  letter-spacing: 0.08em;
+
+  text-transform: uppercase;
+}
+
+.score-empty {
+
+  color: #64748b;
+
+  font-size: 0.78rem;
+
+  padding: 6px 0;
+}
+
+.score-row {
+
+  display: grid;
+
+  grid-template-columns:
+    25px
+    1fr
+    auto;
+
+  gap: 7px;
+
+  align-items: center;
+
+  padding: 8px 0;
+
+  border-bottom:
+    1px solid rgba(7,89,133,0.1);
+
+  font-size: 0.78rem;
+}
+
+.score-row:last-child {
+
+  border-bottom: none;
+}
+
+.score-rank {
+
+  font-weight: 900;
+
+  color: var(--blue-dark);
+}
+
+.score-name {
+
+  color: #164e63;
+
+  font-weight: 700;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.score-time {
+
+  color: #0284c7;
+
+  font-weight: 800;
+
+  font-variant-numeric:
+    tabular-nums;
+}
+
+
+/* =========================================================
+   MOBILE SCOREBOARD
+========================================================= */
+
+@media (max-width: 700px) {
+
+  #scoreboard {
+
+    width: 190px;
+
+    top: 78px;
+
+    left: 10px;
+
+    padding: 11px;
   }
 
-  .bottom-bar {
-    position: fixed;
-    bottom: max(20px, env(safe-area-inset-bottom));
-    left: 0;
-    right: 0;
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    z-index: 10;
+  #scoreboard h3 {
+
+    font-size: 0.75rem;
   }
 
-  button {
-    background: #ffffff;
-    color: #075985;
-    border: none;
-    padding: 13px 24px;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: pointer;
-    letter-spacing: 0.02em;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  .score-row {
+
+    font-size: 0.68rem;
   }
 
-  button.secondary {
-    background: rgba(255,255,255,0.5);
-    color: #075985;
-    border: 1.5px solid rgba(7,89,133,0.45);
-  }
+}
 
-  button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
+
+/* =========================================================
+   BUBBLES
+========================================================= */
+
+.bubble {
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   HIDE SCOREBOARD DURING PUZZLE IF NECESSARY
+========================================================= */
+
+#stage.puzzle-mode + #scoreboard {
+  opacity: 0.75;
+}
+
 </style>
 </head>
 
+
 <body>
 
-<div class="top-bar">
-  <h1>Live Puzzle</h1>
-  <p id="instructions">Allow camera access to begin…</p>
-</div>
 
-<!-- ONLY THE 1-MINUTE GAME TIMER -->
-<div class="timer" id="timer">01:00</div>
+<!-- =======================================================
+     MAIN STAGE
+======================================================= -->
 
 <div id="stage">
-  <video id="video" playsinline autoplay muted></video>
+
+  <video
+    id="video"
+    autoplay
+    muted
+    playsinline>
+  </video>
+
   <canvas id="canvas"></canvas>
+
 </div>
 
-<div class="bottom-bar" id="captureBtnWrap">
-  <button id="captureBtn">📸 Capture Photo</button>
+
+<!-- =======================================================
+     TOP BAR
+======================================================= -->
+
+<div class="top-bar">
+
+  <h1>Ocean Jigsaw</h1>
+
+  <p id="instructions">
+    Allow camera access to begin…
+  </p>
+
 </div>
 
-<div class="bottom-bar" id="cropControls" style="display:none;">
-  <button id="confirmCropBtn">✅ Confirm Crop</button>
-  <button class="secondary" id="cancelCropBtn">✕ Cancel</button>
+
+<!-- =======================================================
+     ONE-MINUTE TIMER
+======================================================= -->
+
+<div
+  class="timer"
+  id="timer">
+
+  01:00
+
 </div>
 
-<div class="bottom-bar" id="postControls" style="display:none;">
-  <button id="undoBtn">↩ Undo</button>
-  <button id="shuffleBtn">🔀 Shuffle</button>
-  <button class="secondary" id="retakeBtn">↺ Retake</button>
+
+<!-- =======================================================
+     SCOREBOARD
+======================================================= -->
+
+<div id="scoreboard">
+
+  <h3>🏆 Scoreboard</h3>
+
+  <div id="scoreList">
+
+    <div class="score-empty">
+      No completed games yet.
+    </div>
+
+  </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14"></script>
 
-<script>
-(function () {
+<!-- =======================================================
+     CAPTURE BUTTON
+======================================================= -->
 
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
+<div
+  class="bottom-bar"
+  id="captureBtnWrap">
 
-  const stage = document.getElementById('stage');
-  const instructions = document.getElementById('instructions');
-  const timerEl = document.getElementById('timer');
+  <button id="captureBtn">
+    📸 Capture Photo
+  </button>
 
-  const captureBtn = document.getElementById('captureBtn');
-  const captureBtnWrap = document.getElementById('captureBtnWrap');
+</div>
 
-  const cropControls = document.getElementById('cropControls');
-  const confirmCropBtn = document.getElementById('confirmCropBtn');
-  const cancelCropBtn = document.getElementById('cancelCropBtn');
 
-  const postControls = document.getElementById('postControls');
-  const shuffleBtn = document.getElementById('shuffleBtn');
-  const undoBtn = document.getElementById('undoBtn');
-  const retakeBtn = document.getElementById('retakeBtn');
+<!-- =======================================================
+     CROP CONTROLS
+======================================================= -->
 
-  const GRID = 3;
-  const CROP_HOLD_MS = 5000;
+<div
+  class="bottom-bar"
+  id="cropControls"
+  style="display:none;">
 
-  /* =========================
-     CANVAS
-  ========================= */
+  <button id="confirmCropBtn">
+    ✅ Confirm Crop
+  </button>
 
-  let CANVAS_W = 0;
-  let CANVAS_H = 0;
+  <button
+    class="secondary"
+    id="cancelCropBtn">
 
-  function resizeCanvas() {
-    CANVAS_W = canvas.width = window.innerWidth;
-    CANVAS_H = canvas.height = window.innerHeight;
-  }
+    ✕ Cancel
 
-  resizeCanvas();
+  </button>
 
+</div>
 
-  /* =========================
-     GAME STATE
-  ========================= */
 
-  let phase = 'preview';
+<!-- =======================================================
+     PUZZLE CONTROLS
+======================================================= -->
 
-  let tileCanvases = [];
-  let order = [];
+<div
+  class="bottom-bar"
+  id="postControls"
+  style="display:none;">
 
-  let heldTile = null;
+  <button id="undoBtn">
+    ↩ Undo
+  </button>
 
-  let cursor = {
-    x: 0,
-    y: 0,
-    visible: false
-  };
+  <button id="shuffleBtn">
+    🔀 Shuffle
+  </button>
 
-  let prevPinching = false;
+  <button
+    class="secondary"
+    id="retakeBtn">
 
-  let solvedShown = false;
+    ↺ Retake
 
-  let moveHistory = [];
+  </button>
 
-  /* =========================
-     1 MINUTE TIMER
-     ========================= */
+</div>
 
-  const ROUND_TIME_MS = 60 * 1000;
 
-  let roundStarted = false;
-  let resultShown = false;
+<!-- =======================================================
+     NAME POPUP
+======================================================= -->
 
-  let timerStart = 0;
-  let timerInterval = null;
+<div
+  class="modal-overlay"
+  id="nameModal">
 
+  <div class="modal">
 
-  /* =========================
-     CROP
-  ========================= */
+    <div class="name-icon">
+      🌊
+    </div>
 
-  let crop = {
-    x: 0,
-    y: 0,
-    w: 0,
-    h: 0
-  };
+    <h2>
+      Enter your name
+    </h2>
 
-  let cropGrab = null;
+    <p>
+      Get ready to solve the ocean jigsaw!
+    </p>
 
-  let twoHandTimerActive = false;
-  let twoHandTimerStart = 0;
+    <input
+      id="playerName"
+      type="text"
+      maxlength="25"
+      placeholder="Your name"
+      autocomplete="off"
+    >
 
+    <button id="startGameBtn">
+      Start Game ✨
+    </button>
 
-  /* =========================
-     HAND TRACKING
-  ========================= */
+  </div>
 
-  let cachedHands = [];
+</div>
 
 
-  /* =========================
-     BUBBLES
-  ========================= */
+<!-- =======================================================
+     RESULT POPUP
+======================================================= -->
 
-  const bubbles = [];
+<div
+  class="modal-overlay"
+  id="resultModal">
 
-  function initBubbles() {
+  <div class="result-modal">
 
-    bubbles.length = 0;
+    <div
+      class="result-icon"
+      id="resultIcon">
 
-    const count = Math.min(
-      28,
-      Math.floor(Math.min(CANVAS_W, CANVAS_H) / 28)
-    );
+      🎉
 
-    for (let i = 0; i < count; i++) {
+    </div>
 
-      bubbles.push({
-        x: Math.random() * CANVAS_W,
-        y: Math.random() * CANVAS_H,
-        r: 6 + Math.random() * 22,
-        speed: 0.3 + Math.random() * 0.9,
-        wobble: Math.random() * Math.PI * 2,
-        wobbleSpeed: 0.01 + Math.random() * 0.03,
-        alpha: 0.12 + Math.random() * 0.25
-      });
+    <h2
+      class="result-title"
+      id="resultTitle">
 
-    }
-  }
+      yay you get a prize
 
+    </h2>
 
-  function drawBubbles() {
+    <div
+      class="result-details"
+      id="resultDetails">
 
-    for (const b of bubbles) {
+    </div>
 
-      b.y -= b.speed;
-      b.wobble += b.wobbleSpeed;
+  </div>
 
-      const bx =
-        b.x + Math.sin(b.wobble) * 14;
+</div>
 
-      if (b.y < -b.r * 2) {
 
-        b.y = CANVAS_H + b.r * 2;
-        b.x = Math.random() * CANVAS_W;
+<!-- =======================================================
+     MEDIAPIPE
+======================================================= -->
 
-      }
+<script type="module">
 
-      ctx.beginPath();
+import {
+  HandLandmarker,
+  FilesetResolver
+}
+from
+"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm";
 
-      ctx.arc(
-        bx,
-        b.y,
-        b.r,
-        0,
-        Math.PI * 2
-      );
 
-      ctx.fillStyle =
-        `rgba(255,255,255,${b.alpha * 0.55})`;
+/* =========================================================
+   DOM ELEMENTS
+========================================================= */
 
-      ctx.fill();
+const video =
+  document.getElementById("video");
 
-      ctx.strokeStyle =
-        `rgba(255,255,255,${Math.min(
-          0.55,
-          b.alpha * 1.4
-        )})`;
+const canvas =
+  document.getElementById("canvas");
 
-      ctx.lineWidth = 1.2;
+const ctx =
+  canvas.getContext("2d");
 
-      ctx.stroke();
+const stage =
+  document.getElementById("stage");
 
-      ctx.beginPath();
+const instructions =
+  document.getElementById("instructions");
 
-      ctx.arc(
-        bx - b.r * 0.3,
-        b.y - b.r * 0.3,
-        b.r * 0.25,
-        0,
-        Math.PI * 2
-      );
+const timerEl =
+  document.getElementById("timer");
 
-      ctx.fillStyle =
-        `rgba(255,255,255,${Math.min(
-          0.75,
-          b.alpha * 1.2
-        )})`;
+const scoreboard =
+  document.getElementById("scoreboard");
 
-      ctx.fill();
-    }
-  }
+const scoreList =
+  document.getElementById("scoreList");
 
+const captureBtn =
+  document.getElementById("captureBtn");
 
-  /* =========================
-     VIDEO MAPPING
-  ========================= */
+const captureBtnWrap =
+  document.getElementById("captureBtnWrap");
 
-  function getCoverTransform() {
+const cropControls =
+  document.getElementById("cropControls");
 
-    const vw = video.videoWidth || 640;
-    const vh = video.videoHeight || 480;
+const confirmCropBtn =
+  document.getElementById("confirmCropBtn");
 
-    const scale = Math.max(
-      CANVAS_W / vw,
-      CANVAS_H / vh
-    );
+const cancelCropBtn =
+  document.getElementById("cancelCropBtn");
 
-    const drawW = vw * scale;
-    const drawH = vh * scale;
+const postControls =
+  document.getElementById("postControls");
 
-    return {
-      vw,
-      vh,
-      scale,
-      drawW,
-      drawH,
-      offsetX: (CANVAS_W - drawW) / 2,
-      offsetY: (CANVAS_H - drawH) / 2
-    };
-  }
+const undoBtn =
+  document.getElementById("undoBtn");
 
+const shuffleBtn =
+  document.getElementById("shuffleBtn");
 
-  function drawCoverVideo(targetCtx) {
+const retakeBtn =
+  document.getElementById("retakeBtn");
 
-    const t = getCoverTransform();
+const nameModal =
+  document.getElementById("nameModal");
 
-    targetCtx.save();
+const playerName =
+  document.getElementById("playerName");
 
-    /* Mirror webcam horizontally */
-    targetCtx.translate(CANVAS_W, 0);
-    targetCtx.scale(-1, 1);
+const startGameBtn =
+  document.getElementById("startGameBtn");
 
-    targetCtx.drawImage(
-      video,
-      t.offsetX,
-      t.offsetY,
-      t.drawW,
-      t.drawH
-    );
+const resultModal =
+  document.getElementById("resultModal");
 
-    targetCtx.restore();
-  }
+const resultIcon =
+  document.getElementById("resultIcon");
 
+const resultTitle =
+  document.getElementById("resultTitle");
 
-  function toCanvasPoint(lm) {
+const resultDetails =
+  document.getElementById("resultDetails");
 
-    const t = getCoverTransform();
 
-    return {
+/* =========================================================
+   GAME CONSTANTS
+========================================================= */
 
-      x:
-        t.offsetX +
-        (1 - lm.x) *
-        t.vw *
-        t.scale,
+const GRID = 3;
 
-      y:
-        t.offsetY +
-        lm.y *
-        t.vh *
-        t.scale
+const CROP_HOLD_MS = 5000;
 
-    };
-  }
+/* ONLY GAME TIMER */
+const ROUND_TIME_MS =
+  60 * 1000;
 
+const SCORE_KEY =
+  "oceanJigsawScores";
 
-  function dist(a, b) {
 
-    return Math.hypot(
-      a.x - b.x,
-      a.y - b.y
-    );
-  }
+/* =========================================================
+   CANVAS
+========================================================= */
 
+let CANVAS_W = 0;
+let CANVAS_H = 0;
 
-  function processHand(landmarks) {
+function resizeCanvas() {
 
-    const thumbTip =
-      toCanvasPoint(landmarks[4]);
+  CANVAS_W =
+    canvas.width =
+    window.innerWidth;
 
-    const indexTip =
-      toCanvasPoint(landmarks[8]);
+  CANVAS_H =
+    canvas.height =
+    window.innerHeight;
+}
 
-    const wrist =
-      toCanvasPoint(landmarks[0]);
+resizeCanvas();
 
-    const midMcp =
-      toCanvasPoint(landmarks[9]);
 
-    const handScale =
-      Math.max(
-        dist(wrist, midMcp),
-        20
-      );
+/* =========================================================
+   GAME STATE
+========================================================= */
 
-    const pinching =
-      dist(thumbTip, indexTip) <
-      handScale * 0.60;
+let phase =
+  "preview";
 
-    return {
+let tileCanvases =
+  [];
 
-      landmarks,
+let order =
+  [];
 
-      thumbTip,
-      indexTip,
-      wrist,
-      midMcp,
+let heldTile =
+  null;
 
-      pinching,
+let cursor = {
 
-      pinchPoint: {
-        x: (thumbTip.x + indexTip.x) / 2,
-        y: (thumbTip.y + indexTip.y) / 2
-      }
+  x: 0,
 
-    };
-  }
+  y: 0,
 
+  visible: false
 
-  /* =========================
-     CROP
-  ========================= */
+};
 
-  function defaultCrop() {
+let prevPinching =
+  false;
 
-    const size =
-      Math.min(
-        CANVAS_W,
-        CANVAS_H
-      ) * 0.82;
+let solvedShown =
+  false;
 
-    crop = {
+let moveHistory =
+  [];
 
-      x: (CANVAS_W - size) / 2,
-      y: (CANVAS_H - size) / 2,
+let player =
+  "";
 
-      w: size,
-      h: size
+let resultShown =
+  false;
 
-    };
-  }
+let roundStarted =
+  false;
 
 
-  function clampCrop() {
+/* =========================================================
+   TIMER STATE
+========================================================= */
 
-    const min =
-      Math.min(
-        CANVAS_W,
-        CANVAS_H
-      ) * 0.18;
+let timerStart =
+  0;
 
-    if (crop.w < min)
-      crop.w = min;
+let timerInterval =
+  null;
 
-    if (crop.h < min)
-      crop.h = min;
 
-    if (crop.w > CANVAS_W)
-      crop.w = CANVAS_W;
+/* =========================================================
+   CROP STATE
+========================================================= */
 
-    if (crop.h > CANVAS_H)
-      crop.h = CANVAS_H;
+let crop = {
 
-    if (crop.x < 0)
-      crop.x = 0;
+  x: 0,
 
-    if (crop.y < 0)
-      crop.y = 0;
+  y: 0,
 
-    if (crop.x + crop.w > CANVAS_W)
-      crop.x = CANVAS_W - crop.w;
+  w: 0,
 
-    if (crop.y + crop.h > CANVAS_H)
-      crop.y = CANVAS_H - crop.h;
-  }
+  h: 0
+};
 
+let cropGrab =
+  null;
 
-  function softClampCrop() {
+let twoHandTimerActive =
+  false;
 
-    if (crop.x < 0) {
+let twoHandTimerStart =
+  0;
 
-      crop.w += crop.x;
-      crop.x = 0;
 
-    }
+/* =========================================================
+   HAND TRACKING STATE
+========================================================= */
 
-    if (crop.y < 0) {
+let cachedHands =
+  [];
 
-      crop.h += crop.y;
-      crop.y = 0;
+let handLandmarker =
+  null;
 
-    }
+let detectBusy =
+  false;
 
-    if (crop.x + crop.w > CANVAS_W)
-      crop.w = CANVAS_W - crop.x;
+let frameCount =
+  0;
 
-    if (crop.y + crop.h > CANVAS_H)
-      crop.h = CANVAS_H - crop.y;
+let lastVideoTime =
+  -1;
 
-    if (crop.w < 10)
-      crop.w = 10;
 
-    if (crop.h < 10)
-      crop.h = 10;
-  }
+/* =========================================================
+   BUBBLES
+========================================================= */
 
+const bubbles =
+  [];
 
-  function cellRect(gridPos) {
 
-    const col = gridPos % GRID;
-    const row = Math.floor(gridPos / GRID);
+function initBubbles() {
 
-    const cw = crop.w / GRID;
-    const ch = crop.h / GRID;
+  bubbles.length = 0;
 
-    return {
-
-      x: crop.x + col * cw,
-      y: crop.y + row * ch,
-
-      w: cw,
-      h: ch
-    };
-  }
-
-
-  function gridPosAt(x, y) {
-
-    if (
-      x < crop.x ||
-      y < crop.y ||
-      x >= crop.x + crop.w ||
-      y >= crop.y + crop.h
-    ) {
-      return -1;
-    }
-
-    const col =
+  const count =
+    Math.min(
+      32,
       Math.floor(
-        (x - crop.x) /
-        (crop.w / GRID)
-      );
-
-    const row =
-      Math.floor(
-        (y - crop.y) /
-        (crop.h / GRID)
-      );
-
-    return row * GRID + col;
-  }
-
-
-  /* =========================
-     PUZZLE TILES
-  ========================= */
-
-  function sliceIntoTiles(sourceCanvas) {
-
-    tileCanvases = [];
-
-    const cw = crop.w / GRID;
-    const ch = crop.h / GRID;
-
-    for (
-      let i = 0;
-      i < GRID * GRID;
-      i++
-    ) {
-
-      const col = i % GRID;
-      const row = Math.floor(i / GRID);
-
-      const tc =
-        document.createElement('canvas');
-
-      tc.width = cw;
-      tc.height = ch;
-
-      tc.getContext('2d').drawImage(
-
-        sourceCanvas,
-
-        crop.x + col * cw,
-        crop.y + row * ch,
-
-        cw,
-        ch,
-
-        0,
-        0,
-        cw,
-        ch
-
-      );
-
-      tileCanvases.push(tc);
-    }
-  }
-
-
-  function shuffle() {
-
-    order =
-      [...Array(GRID * GRID).keys()];
-
-    do {
-
-      for (
-        let i = order.length - 1;
-        i > 0;
-        i--
-      ) {
-
-        const j =
-          Math.floor(
-            Math.random() * (i + 1)
-          );
-
-        [
-          order[i],
-          order[j]
-        ] =
-        [
-          order[j],
-          order[i]
-        ];
-      }
-
-    } while (isSolved());
-
-    solvedShown = false;
-  }
-
-
-  function isSolved() {
-
-    return order.every(
-      (tileId, pos) =>
-        tileId === pos
-    );
-  }
-
-
-  /* =========================
-     TIMER FUNCTIONS
-  ========================= */
-
-  function startTimer() {
-
-    clearInterval(timerInterval);
-
-    timerStart = Date.now();
-
-    roundStarted = true;
-    resultShown = false;
-
-    timerEl.style.display = 'block';
-
-    updateTimer();
-
-    timerInterval =
-      setInterval(
-        updateTimer,
-        100
-      );
-  }
-
-
-  function stopTimer() {
-
-    clearInterval(timerInterval);
-
-    timerInterval = null;
-  }
-
-
-  function updateTimer() {
-
-    if (!roundStarted)
-      return;
-
-    const elapsed =
-      Date.now() - timerStart;
-
-    const remaining =
-      Math.max(
-        0,
-        ROUND_TIME_MS - elapsed
-      );
-
-    const seconds =
-      Math.ceil(
-        remaining / 1000
-      );
-
-    const minutes =
-      Math.floor(seconds / 60);
-
-    const secs =
-      seconds % 60;
-
-    timerEl.textContent =
-      String(minutes).padStart(2, '0') +
-      ':' +
-      String(secs).padStart(2, '0');
-
-    if (remaining <= 0) {
-
-      stopTimer();
-
-      showLoss();
-    }
-  }
-
-
-  /* =========================
-     RESULT SCREENS
-  ========================= */
-
-  function showWin() {
-
-    if (resultShown)
-      return;
-
-    resultShown = true;
-
-    roundStarted = false;
-
-    stopTimer();
-
-    /*
-      Wait 2 seconds after solving
-      before showing the prize popup.
-    */
-
-    setTimeout(() => {
-
-      alert("yay you get a prize");
-
-      /*
-        Wait 3 seconds after the
-        popup before returning home.
-      */
-
-      setTimeout(() => {
-
-        returnToHomeWithName();
-
-      }, 3000);
-
-    }, 2000);
-  }
-
-
-  function showLoss() {
-
-    if (resultShown)
-      return;
-
-    resultShown = true;
-
-    roundStarted = false;
-
-    stopTimer();
-
-    alert(
-      "oh no better luck next time!"
-    );
-
-    /*
-      Return to the original
-      camera/capture screen.
-    */
-
-    setTimeout(() => {
-
-      returnToOriginalScreen();
-
-    }, 3000);
-  }
-
-
-  function returnToHomeWithName() {
-
-    stopTimer();
-
-    roundStarted = false;
-    resultShown = false;
-
-    phase = 'preview';
-
-    heldTile = null;
-    moveHistory = [];
-
-    timerEl.style.display = 'none';
-
-    captureBtnWrap.style.display =
-      'flex';
-
-    cropControls.style.display =
-      'none';
-
-    postControls.style.display =
-      'none';
-
-    stage.classList.remove(
-      'puzzle-mode'
-    );
-
-    instructions.textContent =
-      'Enter your name to start a new game.';
-
-    /*
-      Ask for the player's name again.
-    */
-
-    setTimeout(() => {
-
-      const name =
-        prompt(
-          "enter your name"
-        );
-
-      if (name) {
-
-        localStorage.setItem(
-          "oceanJigsawPlayerName",
-          name
-        );
-
-      }
-
-    }, 100);
-  }
-
-
-  function returnToOriginalScreen() {
-
-    stopTimer();
-
-    roundStarted = false;
-    resultShown = false;
-
-    phase = 'preview';
-
-    heldTile = null;
-    moveHistory = [];
-
-    timerEl.style.display =
-      'none';
-
-    captureBtnWrap.style.display =
-      'flex';
-
-    cropControls.style.display =
-      'none';
-
-    postControls.style.display =
-      'none';
-
-    stage.classList.remove(
-      'puzzle-mode'
-    );
-
-    instructions.textContent =
-      'Ready — capture a photo to make your puzzle.';
-  }
-
-
-  /* =========================
-     CAPTURE PHOTO
-  ========================= */
-
-  function capturePhoto() {
-
-    const sourceCanvas =
-      document.createElement('canvas');
-
-    sourceCanvas.width =
-      CANVAS_W;
-
-    sourceCanvas.height =
-      CANVAS_H;
-
-    const sourceCtx =
-      sourceCanvas.getContext('2d');
-
-    drawCoverVideo(sourceCtx);
-
-    sliceIntoTiles(sourceCanvas);
-
-    shuffle();
-
-    phase = 'puzzle';
-
-    stage.classList.add(
-      'puzzle-mode'
-    );
-
-    captureBtnWrap.style.display =
-      'none';
-
-    cropControls.style.display =
-      'none';
-
-    postControls.style.display =
-      'flex';
-
-    instructions.textContent =
-      'Pinch a puzzle piece and move it to another square.';
-
-    moveHistory = [];
-
-    updateUndoBtn();
-
-    startTimer();
-
-    initBubbles();
-  }
-
-
-  /* =========================
-     UNDO
-  ========================= */
-
-  function updateUndoBtn() {
-
-    undoBtn.disabled =
-      moveHistory.length === 0;
-  }
-
-
-  undoBtn.addEventListener(
-    'click',
-    () => {
-
-      if (!moveHistory.length)
-        return;
-
-      const move =
-        moveHistory.pop();
-
-      const temp =
-        order[move.fromPos];
-
-      order[move.fromPos] =
-        order[move.toPos];
-
-      order[move.toPos] =
-        temp;
-
-      updateUndoBtn();
-    }
-  );
-
-
-  shuffleBtn.addEventListener(
-    'click',
-    () => {
-
-      shuffle();
-
-      moveHistory = [];
-
-      updateUndoBtn();
-    }
-  );
-
-
-  retakeBtn.addEventListener(
-    'click',
-    () => {
-
-      stopTimer();
-
-      roundStarted = false;
-
-      phase = 'preview';
-
-      heldTile = null;
-
-      captureBtnWrap.style.display =
-        'flex';
-
-      cropControls.style.display =
-        'none';
-
-      postControls.style.display =
-        'none';
-
-      timerEl.style.display =
-        'none';
-
-      stage.classList.remove(
-        'puzzle-mode'
-      );
-
-      instructions.textContent =
-        'Ready — capture a photo to make your puzzle.';
-    }
-  );
-
-
-  /* =========================
-     CROP UI
-  ========================= */
-
-  function cropHandleRadius() {
-
-    return Math.max(
-      18,
-      Math.min(
-        CANVAS_W,
-        CANVAS_H
-      ) * 0.035
-    );
-  }
-
-
-  function drawCropBox() {
-
-    const r =
-      cropHandleRadius();
-
-    ctx.save();
-
-    ctx.fillStyle =
-      'rgba(0,0,0,0.35)';
-
-    ctx.fillRect(
-      0,
-      0,
-      CANVAS_W,
-      CANVAS_H
-    );
-
-    ctx.clearRect(
-      crop.x,
-      crop.y,
-      crop.w,
-      crop.h
-    );
-
-    ctx.strokeStyle =
-      '#ffffff';
-
-    ctx.lineWidth = 3;
-
-    ctx.strokeRect(
-      crop.x,
-      crop.y,
-      crop.w,
-      crop.h
-    );
-
-    const corners = [
-      [crop.x, crop.y],
-      [crop.x + crop.w, crop.y],
-      [crop.x, crop.y + crop.h],
-      [crop.x + crop.w, crop.y + crop.h]
-    ];
-
-    corners.forEach(
-      ([cx, cy]) => {
-
-        ctx.beginPath();
-
-        ctx.arc(
-          cx,
-          cy,
-          r * 0.4,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fillStyle =
-          '#d9ff3a';
-
-        ctx.fill();
-
-        ctx.beginPath();
-
-        ctx.arc(
-          cx,
-          cy,
-          r,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.strokeStyle =
-          'rgba(217,255,58,0.5)';
-
-        ctx.lineWidth = 1.5;
-
-        ctx.stroke();
-      }
-    );
-
-    ctx.restore();
-  }
-
-
-  function drawTwoHandTimer() {
-
-    if (!twoHandTimerActive)
-      return;
-
-    const elapsed =
-      performance.now() -
-      twoHandTimerStart;
-
-    const remaining =
-      Math.max(
-        0,
-        CROP_HOLD_MS - elapsed
-      );
-
-    const progress =
-      1 -
-      remaining /
-      CROP_HOLD_MS;
-
-    const cx =
-      CANVAS_W / 2;
-
-    const cy =
-      Math.min(
-        CANVAS_H * 0.16,
-        130
-      );
-
-    const R =
-      Math.max(
-        28,
         Math.min(
           CANVAS_W,
           CANVAS_H
-        ) * 0.045
-      );
+        ) / 25
+      )
+    );
 
-    ctx.save();
+  for (
+    let i = 0;
+    i < count;
+    i++
+  ) {
+
+    bubbles.push({
+
+      x:
+        Math.random()
+        * CANVAS_W,
+
+      y:
+        Math.random()
+        * CANVAS_H,
+
+      r:
+        6 +
+        Math.random()
+        * 23,
+
+      speed:
+        0.25 +
+        Math.random()
+        * 0.9,
+
+      wobble:
+        Math.random()
+        * Math.PI
+        * 2,
+
+      wobbleSpeed:
+        0.01 +
+        Math.random()
+        * 0.025,
+
+      alpha:
+        0.10 +
+        Math.random()
+        * 0.20
+
+    });
+
+  }
+
+}
+
+
+function drawBubbles() {
+
+  for (
+    const b of bubbles
+  ) {
+
+    b.y -= b.speed;
+
+    b.wobble +=
+      b.wobbleSpeed;
+
+    const bx =
+      b.x +
+      Math.sin(
+        b.wobble
+      ) * 14;
+
+    if (
+      b.y <
+      -b.r * 2
+    ) {
+
+      b.y =
+        CANVAS_H +
+        b.r * 2;
+
+      b.x =
+        Math.random()
+        * CANVAS_W;
+
+    }
 
     ctx.beginPath();
 
     ctx.arc(
-      cx,
-      cy,
-      R,
+      bx,
+      b.y,
+      b.r,
       0,
       Math.PI * 2
     );
 
     ctx.fillStyle =
-      'rgba(0,0,0,0.55)';
+      `rgba(
+        255,
+        255,
+        255,
+        ${b.alpha}
+      )`;
 
     ctx.fill();
 
     ctx.beginPath();
 
     ctx.arc(
-      cx,
-      cy,
-      R,
-      -Math.PI / 2,
-      -Math.PI / 2 +
-        progress * Math.PI * 2
+      bx -
+        b.r * 0.3,
+      b.y -
+        b.r * 0.3,
+      b.r * 0.23,
+      0,
+      Math.PI * 2
     );
-
-    ctx.strokeStyle =
-      '#d9ff3a';
-
-    ctx.lineWidth = 5;
-
-    ctx.stroke();
 
     ctx.fillStyle =
-      '#fff';
+      `rgba(
+        255,
+        255,
+        255,
+        ${b.alpha * 0.9}
+      )`;
 
-    ctx.font =
-      `bold ${Math.round(
-        R * 0.9
-      )}px sans-serif`;
+    ctx.fill();
 
-    ctx.textAlign =
-      'center';
-
-    ctx.textBaseline =
-      'middle';
-
-    ctx.fillText(
-      Math.ceil(
-        remaining / 1000
-      ).toString(),
-      cx,
-      cy + 1
-    );
-
-    ctx.restore();
   }
 
+}
 
-  /* =========================
-     RENDER
-  ========================= */
 
-  function render() {
+/* =========================================================
+   VIDEO TRANSFORM
+========================================================= */
 
-    ctx.clearRect(
-      0,
-      0,
-      CANVAS_W,
-      CANVAS_H
+function getCoverTransform() {
+
+  const vw =
+    video.videoWidth ||
+    640;
+
+  const vh =
+    video.videoHeight ||
+    480;
+
+  const scale =
+    Math.max(
+      CANVAS_W / vw,
+      CANVAS_H / vh
     );
 
-    if (
-      phase === 'preview' ||
-      phase === 'crop'
-    ) {
+  const drawW =
+    vw * scale;
 
-      drawCoverVideo(ctx);
+  const drawH =
+    vh * scale;
 
-      if (phase === 'crop') {
+  return {
 
-        drawCropBox();
-        drawTwoHandTimer();
+    vw,
+    vh,
+    scale,
+    drawW,
+    drawH,
 
-      }
+    offsetX:
+      (CANVAS_W -
+        drawW) / 2,
 
-    } else {
+    offsetY:
+      (CANVAS_H -
+        drawH) / 2
 
-      drawBubbles();
+  };
 
-      for (
-        let pos = 0;
-        pos < order.length;
-        pos++
-      ) {
-
-        const tileId =
-          order[pos];
-
-        if (
-          heldTile &&
-          heldTile.tileId === tileId
-        ) {
-          continue;
-        }
-
-        const r =
-          cellRect(pos);
-
-        ctx.drawImage(
-          tileCanvases[tileId],
-          r.x,
-          r.y,
-          r.w,
-          r.h
-        );
-      }
+}
 
 
-      /* Puzzle grid */
+/* =========================================================
+   MIRRORED WEBCAM
+========================================================= */
 
-      ctx.strokeStyle =
-        'rgba(255,255,255,0.5)';
+function drawCoverVideo(targetCtx) {
 
-      ctx.lineWidth = 1;
+  const t =
+    getCoverTransform();
 
-      for (
-        let i = 1;
-        i < GRID;
-        i++
-      ) {
+  /*
+    Mirror the webcam so the
+    user sees themselves like
+    a normal selfie camera.
+  */
 
-        const gx =
-          crop.x +
-          (crop.w / GRID) * i;
+  targetCtx.save();
 
-        ctx.beginPath();
+  targetCtx.translate(
+    CANVAS_W,
+    0
+  );
 
-        ctx.moveTo(
-          gx,
-          crop.y
-        );
+  targetCtx.scale(
+    -1,
+    1
+  );
 
-        ctx.lineTo(
-          gx,
-          crop.y + crop.h
-        );
+  targetCtx.drawImage(
 
-        ctx.stroke();
+    video,
 
+    t.offsetX,
+    t.offsetY,
 
-        const gy =
-          crop.y +
-          (crop.h / GRID) * i;
+    t.drawW,
+    t.drawH
 
-        ctx.beginPath();
+  );
 
-        ctx.moveTo(
-          crop.x,
-          gy
-        );
+  targetCtx.restore();
 
-        ctx.lineTo(
-          crop.x + crop.w,
-          gy
-        );
-
-        ctx.stroke();
-      }
+}
 
 
-      /* Held puzzle piece */
+/* =========================================================
+   HAND COORDINATE MAPPING
+========================================================= */
 
-      if (
-        heldTile &&
-        cursor.visible
-      ) {
+function toCanvasPoint(lm) {
 
-        const cw =
-          crop.w / GRID;
+  const t =
+    getCoverTransform();
 
-        const ch =
-          crop.h / GRID;
+  /*
+    IMPORTANT:
+    x is flipped because the
+    webcam is mirrored.
+  */
 
-        const dw =
-          cw * 1.08;
+  return {
 
-        const dh =
-          ch * 1.08;
+    x:
+      t.offsetX +
+      (1 - lm.x) *
+      t.vw *
+      t.scale,
 
-        ctx.save();
+    y:
+      t.offsetY +
+      lm.y *
+      t.vh *
+      t.scale
 
-        ctx.shadowColor =
-          'rgba(0,0,0,0.6)';
+  };
 
-        ctx.shadowBlur = 18;
-
-        ctx.drawImage(
-          tileCanvases[
-            heldTile.tileId
-          ],
-
-          cursor.x - dw / 2,
-          cursor.y - dh / 2,
-
-          dw,
-          dh
-        );
-
-        ctx.restore();
-      }
+}
 
 
-      /* Detect solved puzzle */
+/* =========================================================
+   DISTANCE
+========================================================= */
 
-      if (
-        isSolved() &&
-        !solvedShown
-      ) {
+function dist(a, b) {
 
-        solvedShown = true;
+  return Math.hypot(
 
-        showWin();
-      }
+    a.x - b.x,
+
+    a.y - b.y
+
+  );
+
+}
 
 
-      if (isSolved()) {
+/* =========================================================
+   PROCESS HAND
+========================================================= */
 
-        ctx.fillStyle =
-          'rgba(255,255,255,0.95)';
+function processHand(
+  landmarks
+) {
 
-        ctx.font =
-          `bold ${Math.round(
-            CANVAS_W * 0.032
-          )}px sans-serif`;
+  const thumbTip =
+    toCanvasPoint(
+      landmarks[4]
+    );
 
-        ctx.textAlign =
-          'center';
+  const indexTip =
+    toCanvasPoint(
+      landmarks[8]
+    );
 
-        ctx.fillText(
-          'SOLVED',
-          CANVAS_W / 2,
-          CANVAS_H * 0.1
-        );
-      }
+  const wrist =
+    toCanvasPoint(
+      landmarks[0]
+    );
+
+  const middleMcp =
+    toCanvasPoint(
+      landmarks[9]
+    );
+
+  const handScale =
+    Math.max(
+
+      dist(
+        wrist,
+        middleMcp
+      ),
+
+      20
+
+    );
+
+  const pinching =
+    dist(
+      thumbTip,
+      indexTip
+    ) <
+    handScale * 0.48;
+
+  return {
+
+    landmarks,
+
+    thumbTip,
+
+    indexTip,
+
+    wrist,
+
+    middleMcp,
+
+    pinching,
+
+    pinchPoint: {
+
+      x:
+        (
+          thumbTip.x +
+          indexTip.x
+        ) / 2,
+
+      y:
+        (
+          thumbTip.y +
+          indexTip.y
+        ) / 2
+
     }
 
+  };
 
-    /* Hand skeleton */
+}
 
-    cachedHands.forEach(
-      h =>
-        drawHandSkeleton(
-          h.landmarks
-        )
+
+/* =========================================================
+   CROP
+========================================================= */
+
+function defaultCrop() {
+
+  const size =
+    Math.min(
+      CANVAS_W,
+      CANVAS_H
+    ) * 0.76;
+
+  crop = {
+
+    x:
+      (CANVAS_W -
+        size) / 2,
+
+    y:
+      (CANVAS_H -
+        size) / 2,
+
+    w:
+      size,
+
+    h:
+      size
+
+  };
+
+}
+
+
+function clampCrop() {
+
+  const min =
+    Math.min(
+      CANVAS_W,
+      CANVAS_H
+    ) * 0.18;
+
+  if (
+    crop.w < min
+  )
+    crop.w = min;
+
+  if (
+    crop.h < min
+  )
+    crop.h = min;
+
+  if (
+    crop.w > CANVAS_W
+  )
+    crop.w = CANVAS_W;
+
+  if (
+    crop.h > CANVAS_H
+  )
+    crop.h = CANVAS_H;
+
+  if (
+    crop.x < 0
+  )
+    crop.x = 0;
+
+  if (
+    crop.y < 0
+  )
+    crop.y = 0;
+
+  if (
+    crop.x +
+    crop.w >
+    CANVAS_W
+  )
+    crop.x =
+      CANVAS_W -
+      crop.w;
+
+  if (
+    crop.y +
+    crop.h >
+    CANVAS_H
+  )
+    crop.y =
+      CANVAS_H -
+      crop.h;
+
+}
+
+
+function softClampCrop() {
+
+  if (
+    crop.x < 0
+  ) {
+
+    crop.w +=
+      crop.x;
+
+    crop.x = 0;
+
+  }
+
+  if (
+    crop.y < 0
+  ) {
+
+    crop.h +=
+      crop.y;
+
+    crop.y = 0;
+
+  }
+
+  if (
+    crop.x +
+    crop.w >
+    CANVAS_W
+  ) {
+
+    crop.w =
+      CANVAS_W -
+      crop.x;
+
+  }
+
+  if (
+    crop.y +
+    crop.h >
+    CANVAS_H
+  ) {
+
+    crop.h =
+      CANVAS_H -
+      crop.y;
+
+  }
+
+  if (
+    crop.w < 10
+  )
+    crop.w = 10;
+
+  if (
+    crop.h < 10
+  )
+    crop.h = 10;
+
+}
+
+
+/* =========================================================
+   GRID
+========================================================= */
+
+function cellRect(
+  gridPos
+) {
+
+  const col =
+    gridPos % GRID;
+
+  const row =
+    Math.floor(
+      gridPos / GRID
     );
 
+  const cw =
+    crop.w / GRID;
 
-    /* Cursor */
+  const ch =
+    crop.h / GRID;
+
+  return {
+
+    x:
+      crop.x +
+      col * cw,
+
+    y:
+      crop.y +
+      row * ch,
+
+    w:
+      cw,
+
+    h:
+      ch
+
+  };
+
+}
+
+
+function gridPosAt(
+  x,
+  y
+) {
+
+  if (
+
+    x < crop.x ||
+
+    y < crop.y ||
+
+    x >=
+      crop.x +
+      crop.w ||
+
+    y >=
+      crop.y +
+      crop.h
+
+  ) {
+
+    return -1;
+
+  }
+
+  const col =
+    Math.floor(
+
+      (
+        x -
+        crop.x
+      ) /
+      (crop.w / GRID)
+
+    );
+
+  const row =
+    Math.floor(
+
+      (
+        y -
+        crop.y
+      ) /
+      (crop.h / GRID)
+
+    );
+
+  return (
+    row * GRID +
+    col
+  );
+
+}
+
+
+/* =========================================================
+   CREATE PUZZLE TILES
+========================================================= */
+
+function sliceIntoTiles(
+  sourceCanvas
+) {
+
+  tileCanvases = [];
+
+  const cw =
+    crop.w / GRID;
+
+  const ch =
+    crop.h / GRID;
+
+  for (
+    let i = 0;
+    i < GRID * GRID;
+    i++
+  ) {
+
+    const col =
+      i % GRID;
+
+    const row =
+      Math.floor(
+        i / GRID
+      );
+
+    const tile =
+      document.createElement(
+        "canvas"
+      );
+
+    tile.width = cw;
+    tile.height = ch;
+
+    const tileCtx =
+      tile.getContext(
+        "2d"
+      );
+
+    tileCtx.drawImage(
+
+      sourceCanvas,
+
+      crop.x +
+        col * cw,
+
+      crop.y +
+        row * ch,
+
+      cw,
+      ch,
+
+      0,
+      0,
+      cw,
+      ch
+
+    );
+
+    tileCanvases.push(
+      tile
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   SHUFFLE
+========================================================= */
+
+function shuffle() {
+
+  order =
+    [
+      ...Array(
+        GRID * GRID
+      ).keys()
+    ];
+
+  do {
+
+    for (
+      let i =
+        order.length - 1;
+      i > 0;
+      i--
+    ) {
+
+      const j =
+        Math.floor(
+          Math.random()
+          * (i + 1)
+        );
+
+      [
+        order[i],
+        order[j]
+      ] =
+      [
+        order[j],
+        order[i]
+      ];
+
+    }
+
+  } while (
+    isSolved()
+  );
+
+  solvedShown =
+    false;
+
+  heldTile =
+    null;
+
+  moveHistory =
+    [];
+
+  updateUndoBtn();
+
+}
+
+
+function isSolved() {
+
+  return order.every(
+    (
+      value,
+      index
+    ) =>
+      value === index
+  );
+
+}
+
+
+/* =========================================================
+   SCOREBOARD
+========================================================= */
+
+function getScores() {
+
+  try {
+
+    return JSON.parse(
+
+      localStorage.getItem(
+        SCORE_KEY
+      ) || "[]"
+
+    );
+
+  } catch {
+
+    return [];
+
+  }
+
+}
+
+
+function saveScore(
+  name,
+  milliseconds
+) {
+
+  const scores =
+    getScores();
+
+  scores.push({
+
+    name:
+      name || "Player",
+
+    milliseconds,
+
+    time:
+      formatTime(
+        milliseconds
+      ),
+
+    date:
+      new Date()
+        .toLocaleString()
+
+  });
+
+  scores.sort(
+    (
+      a,
+      b
+    ) =>
+      a.milliseconds -
+      b.milliseconds
+  );
+
+  /*
+    Keep the top 10 scores.
+  */
+
+  const topScores =
+    scores.slice(
+      0,
+      10
+    );
+
+  localStorage.setItem(
+
+    SCORE_KEY,
+
+    JSON.stringify(
+      topScores
+    )
+
+  );
+
+  renderScoreboard();
+
+}
+
+
+function renderScoreboard() {
+
+  const scores =
+    getScores();
+
+  if (
+    scores.length === 0
+  ) {
+
+    scoreList.innerHTML = `
+
+      <div class="score-empty">
+        No completed games yet.
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  scoreList.innerHTML =
+    scores
+      .map(
+        (
+          score,
+          index
+        ) => `
+
+          <div class="score-row">
+
+            <div class="score-rank">
+              ${index + 1}
+            </div>
+
+            <div class="score-name">
+              ${escapeHTML(
+                score.name
+              )}
+            </div>
+
+            <div class="score-time">
+              ${score.time}
+            </div>
+
+          </div>
+
+        `
+      )
+      .join("");
+
+}
+
+
+function escapeHTML(
+  text
+) {
+
+  return String(text)
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+/* =========================================================
+   FORMAT TIME
+========================================================= */
+
+function formatTime(
+  milliseconds
+) {
+
+  const totalSeconds =
+    Math.floor(
+      milliseconds / 1000
+    );
+
+  const minutes =
+    Math.floor(
+      totalSeconds / 60
+    );
+
+  const seconds =
+    totalSeconds % 60;
+
+  return (
+
+    String(minutes)
+      .padStart(2, "0")
+
+    +
+
+    ":" +
+
+    String(seconds)
+      .padStart(2, "0")
+
+  );
+
+}
+
+
+/* =========================================================
+   GAME TIMER
+========================================================= */
+
+function startTimer() {
+
+  stopTimer();
+
+  timerStart =
+    Date.now();
+
+  roundStarted =
+    true;
+
+  resultShown =
+    false;
+
+  timerEl.style.display =
+    "block";
+
+  updateTimer();
+
+  timerInterval =
+    setInterval(
+      updateTimer,
+      100
+    );
+
+}
+
+
+function stopTimer() {
+
+  if (
+    timerInterval
+  ) {
+
+    clearInterval(
+      timerInterval
+    );
+
+    timerInterval =
+      null;
+
+  }
+
+}
+
+
+function updateTimer() {
+
+  if (
+    !roundStarted
+  )
+    return;
+
+  const elapsed =
+    Date.now() -
+    timerStart;
+
+  const remaining =
+    Math.max(
+      0,
+      ROUND_TIME_MS -
+      elapsed
+    );
+
+  const seconds =
+    Math.ceil(
+      remaining / 1000
+    );
+
+  const minutes =
+    Math.floor(
+      seconds / 60
+    );
+
+  const secs =
+    seconds % 60;
+
+  timerEl.textContent =
+
+    String(minutes)
+      .padStart(2, "0")
+
+    +
+
+    ":" +
+
+    String(secs)
+      .padStart(2, "0");
+
+
+  if (
+    remaining <= 0
+  ) {
+
+    stopTimer();
+
+    roundStarted =
+      false;
+
+    showLoss();
+
+  }
+
+}
+
+
+/* =========================================================
+   WIN
+========================================================= */
+
+function showWin() {
+
+  if (
+    resultShown
+  )
+    return;
+
+  resultShown =
+    true;
+
+  roundStarted =
+    false;
+
+  stopTimer();
+
+  const elapsed =
+    Date.now() -
+    timerStart;
+
+  /*
+    SAVE SCORE IMMEDIATELY.
+  */
+
+  saveScore(
+    player,
+    elapsed
+  );
+
+  timerEl.style.display =
+    "none";
+
+  instructions.textContent =
+    "🎉 Puzzle completed!";
+
+
+  /*
+    WAIT 2 SECONDS BEFORE
+    SHOWING WIN POPUP.
+  */
+
+  setTimeout(
+    () => {
+
+      resultIcon.textContent =
+        "🎉";
+
+      resultTitle.textContent =
+        "yay you get a prize";
+
+      resultDetails.innerHTML =
+
+        `
+
+          <strong>
+            ${escapeHTML(
+              player
+            )}
+          </strong>
+
+          <br>
+
+          You completed the puzzle
+          in
+          <strong>
+            ${formatTime(
+              elapsed
+            )}
+          </strong>!
+
+        `;
+
+      resultModal.style.display =
+        "flex";
+
+
+      /*
+        KEEP WIN POPUP FOR
+        3 SECONDS.
+      */
+
+      setTimeout(
+        () => {
+
+          resultModal.style.display =
+            "none";
+
+          returnToNameScreen();
+
+        },
+        3000
+      );
+
+    },
+    2000
+  );
+
+}
+
+
+/* =========================================================
+   LOSS
+========================================================= */
+
+function showLoss() {
+
+  if (
+    resultShown
+  )
+    return;
+
+  resultShown =
+    true;
+
+  roundStarted =
+    false;
+
+  stopTimer();
+
+  timerEl.style.display =
+    "none";
+
+  resultIcon.textContent =
+    "😭";
+
+  resultTitle.textContent =
+    "oh no better luck next time!";
+
+  resultDetails.textContent =
+    "The 1 minute time limit is over.";
+
+  resultModal.style.display =
+    "flex";
+
+
+  /*
+    WAIT 3 SECONDS,
+    THEN RETURN TO ORIGINAL
+    CAMERA SCREEN.
+  */
+
+  setTimeout(
+    () => {
+
+      resultModal.style.display =
+        "none";
+
+      returnToOriginalScreen();
+
+    },
+    3000
+  );
+
+}
+
+
+/* =========================================================
+   RETURN TO NAME SCREEN AFTER WIN
+========================================================= */
+
+function returnToNameScreen() {
+
+  stopTimer();
+
+  roundStarted =
+    false;
+
+  resultShown =
+    false;
+
+  phase =
+    "preview";
+
+  heldTile =
+    null;
+
+  moveHistory =
+    [];
+
+  timerEl.style.display =
+    "none";
+
+  captureBtnWrap.style.display =
+    "flex";
+
+  cropControls.style.display =
+    "none";
+
+  postControls.style.display =
+    "none";
+
+  stage.classList.remove(
+    "puzzle-mode"
+  );
+
+  instructions.textContent =
+    "Enter your name to start a new game.";
+
+  /*
+    Clear old name so the next
+    person enters their own name.
+  */
+
+  playerName.value =
+    "";
+
+  setTimeout(
+    () => {
+
+      nameModal.style.display =
+        "flex";
+
+      playerName.focus();
+
+    },
+    150
+  );
+
+}
+
+
+/* =========================================================
+   RETURN TO ORIGINAL SCREEN
+   AFTER LOSING
+========================================================= */
+
+function returnToOriginalScreen() {
+
+  stopTimer();
+
+  roundStarted =
+    false;
+
+  resultShown =
+    false;
+
+  phase =
+    "preview";
+
+  heldTile =
+    null;
+
+  moveHistory =
+    [];
+
+  timerEl.style.display =
+    "none";
+
+  captureBtnWrap.style.display =
+    "flex";
+
+  cropControls.style.display =
+    "none";
+
+  postControls.style.display =
+    "none";
+
+  stage.classList.remove(
+    "puzzle-mode"
+  );
+
+  instructions.textContent =
+    "Frame yourself, then capture.";
+
+}
+
+
+/* =========================================================
+   START GAME
+========================================================= */
+
+function startGame() {
+
+  const enteredName =
+    playerName.value.trim();
+
+  if (
+    !enteredName
+  ) {
+
+    playerName.focus();
+
+    return;
+
+  }
+
+  player =
+    enteredName;
+
+  localStorage.setItem(
+
+    "oceanJigsawPlayerName",
+
+    player
+
+  );
+
+  nameModal.style.display =
+    "none";
+
+  phase =
+    "preview";
+
+  instructions.textContent =
+    `Good luck, ${player}! Frame yourself, then capture.`;
+
+}
+
+
+/* =========================================================
+   NAME BUTTON
+========================================================= */
+
+startGameBtn.addEventListener(
+  "click",
+  startGame
+);
+
+
+playerName.addEventListener(
+  "keydown",
+  event => {
 
     if (
-      cursor.visible &&
-      phase === 'puzzle'
+      event.key ===
+      "Enter"
     ) {
+
+      startGame();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   CAPTURE PHOTO
+========================================================= */
+
+function capturePhoto() {
+
+  const shot =
+    document.createElement(
+      "canvas"
+    );
+
+  shot.width =
+    CANVAS_W;
+
+  shot.height =
+    CANVAS_H;
+
+  const shotCtx =
+    shot.getContext(
+      "2d"
+    );
+
+  /*
+    Capture the MIRRORED
+    webcam image.
+  */
+
+  drawCoverVideo(
+    shotCtx
+  );
+
+  sliceIntoTiles(
+    shot
+  );
+
+  shuffle();
+
+  phase =
+    "puzzle";
+
+  twoHandTimerActive =
+    false;
+
+  cropGrab =
+    null;
+
+  captureBtnWrap.style.display =
+    "none";
+
+  cropControls.style.display =
+    "none";
+
+  postControls.style.display =
+    "flex";
+
+  stage.classList.add(
+    "puzzle-mode"
+  );
+
+  initBubbles();
+
+  instructions.textContent =
+    "Pinch a tile and drag it onto another square to swap them.";
+
+  /*
+    Start the ONE-MINUTE
+    puzzle countdown.
+  */
+
+  startTimer();
+
+}
+
+
+/* =========================================================
+   ENTER CROP MODE
+========================================================= */
+
+function enterCropPhase() {
+
+  phase =
+    "crop";
+
+  defaultCrop();
+
+  twoHandTimerActive =
+    false;
+
+  cropGrab =
+    null;
+
+  captureBtnWrap.style.display =
+    "none";
+
+  cropControls.style.display =
+    "flex";
+
+  postControls.style.display =
+    "none";
+
+  instructions.textContent =
+    "Adjust the crop with your hand, then confirm.";
+
+}
+
+
+/* =========================================================
+   CAPTURE BUTTON
+========================================================= */
+
+captureBtn.addEventListener(
+  "click",
+  enterCropPhase
+);
+
+
+/* =========================================================
+   CONFIRM CROP
+========================================================= */
+
+confirmCropBtn.addEventListener(
+  "click",
+  () => {
+
+    clampCrop();
+
+    capturePhoto();
+
+  }
+);
+
+
+/* =========================================================
+   CANCEL CROP
+========================================================= */
+
+cancelCropBtn.addEventListener(
+  "click",
+  () => {
+
+    returnToOriginalScreen();
+
+  }
+);
+
+
+/* =========================================================
+   RETAKE
+========================================================= */
+
+retakeBtn.addEventListener(
+  "click",
+  () => {
+
+    returnToOriginalScreen();
+
+  }
+);
+
+
+/* =========================================================
+   SHUFFLE
+========================================================= */
+
+shuffleBtn.addEventListener(
+  "click",
+  () => {
+
+    if (
+      phase !== "puzzle"
+    )
+      return;
+
+    shuffle();
+
+    /*
+      Restart the ONE-MINUTE
+      puzzle timer when shuffled.
+    */
+
+    startTimer();
+
+    instructions.textContent =
+      "Shuffled! Solve the puzzle again.";
+
+  }
+);
+
+
+/* =========================================================
+   UNDO
+========================================================= */
+
+function updateUndoBtn() {
+
+  undoBtn.disabled =
+    moveHistory.length === 0;
+
+}
+
+
+function undoMove() {
+
+  if (
+
+    moveHistory.length === 0 ||
+
+    phase !== "puzzle"
+
+  ) {
+
+    return;
+
+  }
+
+  const move =
+    moveHistory.pop();
+
+  const temp =
+    order[
+      move.fromPos
+    ];
+
+  order[
+    move.fromPos
+  ] =
+    order[
+      move.toPos
+    ];
+
+  order[
+    move.toPos
+  ] =
+    temp;
+
+  heldTile =
+    null;
+
+  updateUndoBtn();
+
+  instructions.textContent =
+    "Undid the last move.";
+
+}
+
+
+undoBtn.addEventListener(
+  "click",
+  undoMove
+);
+
+
+/* =========================================================
+   CROP HANDLE
+========================================================= */
+
+function cropHandleRadius() {
+
+  return Math.max(
+
+    24,
+
+    Math.min(
+      CANVAS_W,
+      CANVAS_H
+    ) * 0.035
+
+  );
+
+}
+
+
+/* =========================================================
+   DRAW CROP BOX
+========================================================= */
+
+function drawCropBox() {
+
+  ctx.save();
+
+  /*
+    Darken everything outside
+    the crop area.
+  */
+
+  ctx.fillStyle =
+    "rgba(0,50,70,0.42)";
+
+  ctx.fillRect(
+    0,
+    0,
+    CANVAS_W,
+    crop.y
+  );
+
+  ctx.fillRect(
+
+    0,
+
+    crop.y +
+      crop.h,
+
+    CANVAS_W,
+
+    CANVAS_H -
+      (
+        crop.y +
+        crop.h
+      )
+
+  );
+
+  ctx.fillRect(
+
+    0,
+
+    crop.y,
+
+    crop.x,
+
+    crop.h
+
+  );
+
+  ctx.fillRect(
+
+    crop.x +
+      crop.w,
+
+    crop.y,
+
+    CANVAS_W -
+      (
+        crop.x +
+        crop.w
+      ),
+
+    crop.h
+
+  );
+
+
+  /*
+    Crop outline.
+  */
+
+  ctx.strokeStyle =
+    "#ffffff";
+
+  ctx.lineWidth =
+    3;
+
+  ctx.strokeRect(
+
+    crop.x,
+    crop.y,
+    crop.w,
+    crop.h
+
+  );
+
+
+  /*
+    Corner handles.
+  */
+
+  const r =
+    cropHandleRadius();
+
+  const corners = [
+
+    [
+      crop.x,
+      crop.y
+    ],
+
+    [
+      crop.x +
+        crop.w,
+      crop.y
+    ],
+
+    [
+      crop.x,
+      crop.y +
+        crop.h
+    ],
+
+    [
+      crop.x +
+        crop.w,
+      crop.y +
+        crop.h
+    ]
+
+  ];
+
+
+  corners.forEach(
+    ([x, y]) => {
 
       ctx.beginPath();
 
       ctx.arc(
-        cursor.x,
-        cursor.y,
-        11,
+        x,
+        y,
+        r * 0.4,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.fillStyle =
+        "#ffffff";
+
+      ctx.fill();
+
+      ctx.beginPath();
+
+      ctx.arc(
+        x,
+        y,
+        r,
         0,
         Math.PI * 2
       );
 
       ctx.strokeStyle =
-        heldTile
-          ? '#ffffff'
-          : 'rgba(255,255,255,0.9)';
+        "rgba(255,255,255,0.55)";
 
-      ctx.lineWidth = 3;
+      ctx.lineWidth =
+        1.5;
 
       ctx.stroke();
+
     }
+  );
+
+
+  ctx.restore();
+
+}
+
+
+/* =========================================================
+   TWO HAND CROP TIMER
+========================================================= */
+
+function drawTwoHandTimer() {
+
+  if (
+    !twoHandTimerActive
+  )
+    return;
+
+  const elapsed =
+    performance.now() -
+    twoHandTimerStart;
+
+  const remaining =
+    Math.max(
+
+      0,
+
+      CROP_HOLD_MS -
+      elapsed
+
+    );
+
+  const progress =
+    1 -
+    remaining /
+    CROP_HOLD_MS;
+
+  const cx =
+    CANVAS_W / 2;
+
+  const cy =
+    Math.min(
+      CANVAS_H * 0.15,
+      125
+    );
+
+  const radius =
+    Math.max(
+
+      28,
+
+      Math.min(
+        CANVAS_W,
+        CANVAS_H
+      ) * 0.045
+
+    );
+
+
+  ctx.save();
+
+
+  ctx.beginPath();
+
+  ctx.arc(
+
+    cx,
+    cy,
+    radius,
+    0,
+    Math.PI * 2
+
+  );
+
+  ctx.fillStyle =
+    "rgba(0,60,80,0.65)";
+
+  ctx.fill();
+
+
+  ctx.beginPath();
+
+  ctx.arc(
+
+    cx,
+    cy,
+    radius,
+
+    -Math.PI / 2,
+
+    -Math.PI / 2 +
+      progress *
+      Math.PI *
+      2
+
+  );
+
+  ctx.strokeStyle =
+    "#ffffff";
+
+  ctx.lineWidth =
+    5;
+
+  ctx.stroke();
+
+
+  ctx.fillStyle =
+    "#ffffff";
+
+  ctx.font =
+    `bold ${
+      Math.round(
+        radius * 0.9
+      )
+    }px sans-serif`;
+
+  ctx.textAlign =
+    "center";
+
+  ctx.textBaseline =
+    "middle";
+
+  ctx.fillText(
+
+    Math.ceil(
+      remaining /
+      1000
+    ).toString(),
+
+    cx,
+    cy
+
+  );
+
+
+  ctx.restore();
+
+}
+
+
+/* =========================================================
+   SINGLE-HAND CROP
+========================================================= */
+
+function handleSingleHandCrop(
+  hand
+) {
+
+  if (!hand) {
+
+    prevPinching =
+      false;
+
+    cropGrab =
+      null;
+
+    cursor.visible =
+      false;
+
+    return;
+
   }
 
 
-  /* =========================
-     HAND SKELETON
-  ========================= */
+  const pinching =
+    hand.pinching;
 
-  function drawHandSkeleton(landmarks) {
 
-    const connections = [
+  cursor.x =
+    hand.pinchPoint.x;
 
-      [0,1],
-      [1,2],
-      [2,3],
-      [3,4],
+  cursor.y =
+    hand.pinchPoint.y;
 
-      [0,5],
-      [5,6],
-      [6,7],
-      [7,8],
+  cursor.visible =
+    true;
 
-      [5,9],
-      [9,10],
-      [10,11],
-      [11,12],
 
-      [9,13],
-      [13,14],
-      [14,15],
-      [15,16],
+  if (
+    pinching &&
+    !prevPinching
+  ) {
 
-      [13,17],
-      [17,18],
-      [18,19],
-      [19,20],
+    const r =
+      cropHandleRadius();
 
-      [0,17]
+    const corners = {
 
-    ];
+      tl: {
+        x: crop.x,
+        y: crop.y
+      },
 
-    ctx.save();
+      tr: {
+        x:
+          crop.x +
+          crop.w,
 
-    ctx.strokeStyle =
-      'rgba(255,255,255,0.7)';
+        y:
+          crop.y
+      },
 
-    ctx.lineWidth = 2;
+      bl: {
+        x:
+          crop.x,
+
+        y:
+          crop.y +
+          crop.h
+      },
+
+      br: {
+        x:
+          crop.x +
+          crop.w,
+
+        y:
+          crop.y +
+          crop.h
+      }
+
+    };
+
+
+    let mode =
+      null;
+
 
     for (
-      const [a,b]
-      of connections
+      const key in corners
     ) {
 
-      const p1 =
-        toCanvasPoint(
-          landmarks[a]
-        );
+      if (
 
-      const p2 =
-        toCanvasPoint(
-          landmarks[b]
-        );
+        dist(
+          cursor,
+          corners[key]
+        ) < r
 
-      ctx.beginPath();
+      ) {
 
-      ctx.moveTo(
-        p1.x,
-        p1.y
-      );
+        mode =
+          key;
 
-      ctx.lineTo(
-        p2.x,
-        p2.y
-      );
+        break;
 
-      ctx.stroke();
+      }
+
     }
-
-    ctx.restore();
-  }
-
-
-  /* =========================
-     CROP HAND LOGIC
-  ========================= */
-
-  function handleSingleHandCrop(hand) {
-
-    if (!hand) {
-
-      prevPinching = false;
-      cropGrab = null;
-
-      return;
-    }
-
-    const pinching =
-      hand.pinching;
-
-    cursor.x =
-      hand.pinchPoint.x;
-
-    cursor.y =
-      hand.pinchPoint.y;
-
-    cursor.visible = true;
 
 
     if (
-      pinching &&
-      !prevPinching
+      !mode &&
+      cursor.x >
+        crop.x &&
+      cursor.x <
+        crop.x +
+        crop.w &&
+      cursor.y >
+        crop.y &&
+      cursor.y <
+        crop.y +
+        crop.h
     ) {
 
-      const r =
-        cropHandleRadius();
+      mode =
+        "move";
 
-      const corners = {
+    }
 
-        tl: {
-          x: crop.x,
-          y: crop.y
-        },
 
-        tr: {
-          x: crop.x + crop.w,
-          y: crop.y
-        },
+    if (mode) {
 
-        bl: {
-          x: crop.x,
-          y: crop.y + crop.h
-        },
+      cropGrab = {
 
-        br: {
-          x: crop.x + crop.w,
-          y: crop.y + crop.h
+        mode,
+
+        startX:
+          cursor.x,
+
+        startY:
+          cursor.y,
+
+        orig: {
+          ...crop
         }
 
       };
 
-      let mode = null;
-
-      for (
-        const key in corners
-      ) {
-
-        if (
-          dist(
-            cursor,
-            corners[key]
-          ) < r
-        ) {
-
-          mode = key;
-          break;
-        }
-      }
+    }
 
 
-      if (
-        !mode &&
-        cursor.x > crop.x &&
-        cursor.x < crop.x + crop.w &&
-        cursor.y > crop.y &&
-        cursor.y < crop.y + crop.h
-      ) {
-
-        mode = 'move';
-      }
+  }
 
 
-      if (mode) {
+  else if (
 
-        cropGrab = {
+    pinching &&
+    prevPinching &&
+    cropGrab
 
-          mode,
+  ) {
 
-          startX:
-            cursor.x,
+    const dx =
+      cursor.x -
+      cropGrab.startX;
 
-          startY:
-            cursor.y,
+    const dy =
+      cursor.y -
+      cropGrab.startY;
 
-          orig:
-            {
-              ...crop
-            }
-
-        };
-      }
+    const original =
+      cropGrab.orig;
 
 
-    } else if (
-      pinching &&
-      prevPinching &&
-      cropGrab
+    switch (
+      cropGrab.mode
     ) {
 
-      const dx =
-        cursor.x -
-        cropGrab.startX;
+      case "move":
 
-      const dy =
-        cursor.y -
-        cropGrab.startY;
+        crop.x =
+          original.x +
+          dx;
 
-      const o =
-        cropGrab.orig;
+        crop.y =
+          original.y +
+          dy;
 
-
-      switch (
-        cropGrab.mode
-      ) {
-
-        case 'move':
-
-          crop.x =
-            o.x + dx;
-
-          crop.y =
-            o.y + dy;
-
-          break;
+        break;
 
 
-        case 'tl':
+      case "tl":
 
-          crop.x =
-            o.x + dx;
+        crop.x =
+          original.x +
+          dx;
 
-          crop.y =
-            o.y + dy;
+        crop.y =
+          original.y +
+          dy;
 
-          crop.w =
-            o.w - dx;
+        crop.w =
+          original.w -
+          dx;
 
-          crop.h =
-            o.h - dy;
+        crop.h =
+          original.h -
+          dy;
 
-          break;
-
-
-        case 'tr':
-
-          crop.y =
-            o.y + dy;
-
-          crop.w =
-            o.w + dx;
-
-          crop.h =
-            o.h - dy;
-
-          break;
+        break;
 
 
-        case 'bl':
+      case "tr":
 
-          crop.x =
-            o.x + dx;
+        crop.y =
+          original.y +
+          dy;
 
-          crop.w =
-            o.w - dx;
+        crop.w =
+          original.w +
+          dx;
 
-          crop.h =
-            o.h + dy;
+        crop.h =
+          original.h -
+          dy;
 
-          break;
+        break;
 
 
-        case 'br':
+      case "bl":
 
-          crop.w =
-            o.w + dx;
+        crop.x =
+          original.x +
+          dx;
 
-          crop.h =
-            o.h + dy;
+        crop.w =
+          original.w -
+          dx;
 
-          break;
-      }
+        crop.h =
+          original.h +
+          dy;
+
+        break;
+
+
+      case "br":
+
+        crop.w =
+          original.w +
+          dx;
+
+        crop.h =
+          original.h +
+          dy;
+
+        break;
+
+    }
+
+
+    clampCrop();
+
+  }
+
+
+  else if (
+
+    !pinching &&
+    prevPinching
+
+  ) {
+
+    cropGrab =
+      null;
+
+  }
+
+
+  prevPinching =
+    pinching;
+
+}
+
+
+/* =========================================================
+   TWO-HAND CROP
+========================================================= */
+
+function handleCropLogic(
+  hands
+) {
+
+  const twoHands =
+    hands.length >= 2 &&
+    hands[0].pinching &&
+    hands[1].pinching;
+
+
+  if (
+    twoHands
+  ) {
+
+    cropGrab =
+      null;
+
+    const p1 =
+      hands[0].pinchPoint;
+
+    const p2 =
+      hands[1].pinchPoint;
+
+
+    crop = {
+
+      x:
+        Math.min(
+          p1.x,
+          p2.x
+        ),
+
+      y:
+        Math.min(
+          p1.y,
+          p2.y
+        ),
+
+      w:
+        Math.abs(
+          p1.x -
+          p2.x
+        ),
+
+      h:
+        Math.abs(
+          p1.y -
+          p2.y
+        )
+
+    };
+
+
+    softClampCrop();
+
+
+    if (
+      !twoHandTimerActive
+    ) {
+
+      twoHandTimerActive =
+        true;
+
+      twoHandTimerStart =
+        performance.now();
+
+    }
+
+
+    if (
+
+      performance.now() -
+      twoHandTimerStart >=
+      CROP_HOLD_MS
+
+    ) {
 
       clampCrop();
 
+      capturePhoto();
 
-    } else if (
-      !pinching &&
-      prevPinching
-    ) {
-
-      cropGrab = null;
     }
 
 
-    prevPinching =
-      pinching;
-  }
-
-
-  function handleCropLogic(hands2) {
-
-    const twoHandMode =
-      hands2.length >= 2 &&
-      hands2[0].pinching &&
-      hands2[1].pinching;
-
-
-    if (twoHandMode) {
-
-      cropGrab = null;
-
-      const p1 =
-        hands2[0].pinchPoint;
-
-      const p2 =
-        hands2[1].pinchPoint;
-
-
-      crop = {
-
-        x:
-          Math.min(
-            p1.x,
-            p2.x
-          ),
-
-        y:
-          Math.min(
-            p1.y,
-            p2.y
-          ),
-
-        w:
-          Math.abs(
-            p1.x -
-            p2.x
-          ),
-
-        h:
-          Math.abs(
-            p1.y -
-            p2.y
-          )
-
-      };
-
-
-      softClampCrop();
-
-
-      if (
-        !twoHandTimerActive
-      ) {
-
-        twoHandTimerActive =
-          true;
-
-        twoHandTimerStart =
-          performance.now();
-      }
-
-
-      if (
-        performance.now() -
-        twoHandTimerStart >=
-        CROP_HOLD_MS
-      ) {
-
-        clampCrop();
-
-        capturePhoto();
-      }
-
-
-      cursor.visible =
-        false;
-
-      return;
-    }
-
-
-    twoHandTimerActive =
+    cursor.visible =
       false;
 
-    handleSingleHandCrop(
-      hands2[0] || null
-    );
+    return;
+
   }
 
 
-  /* =========================
-     PUZZLE HAND LOGIC
-  ========================= */
+  twoHandTimerActive =
+    false;
 
-  function handlePuzzleLogic(hand) {
+  handleSingleHandCrop(
+    hands[0] || null
+  );
 
-    if (!hand) {
-
-      cursor.visible = false;
-      prevPinching = false;
-
-      return;
-    }
+}
 
 
-    cursor.x =
-      hand.pinchPoint.x;
+/* =========================================================
+   PUZZLE HAND LOGIC
+========================================================= */
 
-    cursor.y =
-      hand.pinchPoint.y;
+function handlePuzzleLogic(
+  hand
+) {
 
-    cursor.visible = true;
+  if (!hand) {
+
+    cursor.visible =
+      false;
+
+    prevPinching =
+      false;
+
+    heldTile =
+      null;
+
+    return;
+
+  }
 
 
-    const pinching =
-      hand.pinching;
+  cursor.x =
+    hand.pinchPoint.x;
+
+  cursor.y =
+    hand.pinchPoint.y;
+
+  cursor.visible =
+    true;
+
+
+  const pinching =
+    hand.pinching;
+
+
+  /*
+    START HOLDING TILE
+  */
+
+  if (
+
+    pinching &&
+    !prevPinching
+
+  ) {
+
+    const pos =
+      gridPosAt(
+        cursor.x,
+        cursor.y
+      );
 
 
     if (
-      pinching &&
-      !prevPinching
+      pos !== -1 &&
+      !heldTile
     ) {
 
-      const pos =
+      heldTile = {
+
+        tileId:
+          order[pos],
+
+        fromPos:
+          pos
+
+      };
+
+    }
+
+  }
+
+
+  /*
+    RELEASE TILE
+  */
+
+  else if (
+
+    !pinching &&
+    prevPinching
+
+  ) {
+
+    if (
+      heldTile
+    ) {
+
+      const dropPos =
         gridPosAt(
           cursor.x,
           cursor.y
@@ -1930,470 +3600,914 @@
 
 
       if (
-        pos !== -1 &&
-        !heldTile
+
+        dropPos !== -1 &&
+
+        dropPos !==
+          heldTile.fromPos
+
       ) {
 
-        heldTile = {
+        const otherTile =
+          order[
+            dropPos
+          ];
 
-          tileId:
-            order[pos],
+
+        order[
+          dropPos
+        ] =
+          heldTile.tileId;
+
+
+        order[
+          heldTile.fromPos
+        ] =
+          otherTile;
+
+
+        moveHistory.push({
 
           fromPos:
-            pos
-        };
+            heldTile.fromPos,
+
+          toPos:
+            dropPos
+
+        });
+
+
+        updateUndoBtn();
+
       }
 
 
-    } else if (
-      !pinching &&
-      prevPinching
-    ) {
+      heldTile =
+        null;
 
-      if (heldTile) {
-
-        const dropPos =
-          gridPosAt(
-            cursor.x,
-            cursor.y
-          );
-
-
-        if (
-          dropPos !== -1 &&
-          dropPos !== heldTile.fromPos
-        ) {
-
-          const otherTile =
-            order[dropPos];
-
-
-          order[dropPos] =
-            heldTile.tileId;
-
-
-          order[
-            heldTile.fromPos
-          ] =
-            otherTile;
-
-
-          moveHistory.push({
-
-            fromPos:
-              heldTile.fromPos,
-
-            toPos:
-              dropPos
-
-          });
-
-
-          updateUndoBtn();
-        }
-
-
-        heldTile = null;
-      }
     }
 
-
-    prevPinching =
-      pinching;
   }
 
 
-  /* =========================
-     MEDIAPIPE
-  ========================= */
+  prevPinching =
+    pinching;
 
-  let handLandmarker = null;
-
-  let detectBusy = false;
-
-  let lastVideoTime = -1;
-
-  let frameCount = 0;
-
-  let modelReady = false;
+}
 
 
-  async function initHandTracking() {
+/* =========================================================
+   HAND SKELETON
+========================================================= */
 
-    if (
-      !window.FilesetResolver ||
-      !window.HandLandmarker
-    ) {
+function drawHandSkeleton(
+  landmarks
+) {
 
-      throw new Error(
-        'MediaPipe Tasks Vision did not load. Check your internet connection.'
-      );
-    }
+  const connections = [
+
+    [0,1],
+    [1,2],
+    [2,3],
+    [3,4],
+
+    [0,5],
+    [5,6],
+    [6,7],
+    [7,8],
+
+    [5,9],
+    [9,10],
+    [10,11],
+    [11,12],
+
+    [9,13],
+    [13,14],
+    [14,15],
+    [15,16],
+
+    [13,17],
+    [17,18],
+    [18,19],
+    [19,20],
+
+    [0,17]
+
+  ];
 
 
-    const filesetResolver =
-      await FilesetResolver.forVisionTasks(
-
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
-
-      );
+  ctx.save();
 
 
-    handLandmarker =
-      await HandLandmarker.createFromOptions(
+  ctx.strokeStyle =
+    "rgba(255,255,255,0.8)";
 
-        filesetResolver,
+  ctx.lineWidth =
+    2;
 
-        {
 
-          baseOptions: {
+  for (
+    const [a,b]
+    of connections
+  ) {
 
-            modelAssetPath:
-              'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
-
-            delegate:
-              'CPU'
-
-          },
-
-          runningMode:
-            'VIDEO',
-
-          numHands:
-            2,
-
-          minHandDetectionConfidence:
-            0.35,
-
-          minHandPresenceConfidence:
-            0.35,
-
-          minTrackingConfidence:
-            0.35
-        }
+    const p1 =
+      toCanvasPoint(
+        landmarks[a]
       );
 
+    const p2 =
+      toCanvasPoint(
+        landmarks[b]
+      );
 
-    modelReady = true;
 
+    ctx.beginPath();
 
-    instructions.textContent =
-      'Hand tracking ready — pinch with your thumb + index finger.';
+    ctx.moveTo(
+      p1.x,
+      p1.y
+    );
+
+    ctx.lineTo(
+      p2.x,
+      p2.y
+    );
+
+    ctx.stroke();
+
   }
 
 
-  /* =========================
-     CAMERA LOOP
-  ========================= */
+  /*
+    Draw hand joints.
+  */
 
-  async function cameraLoop() {
+  for (
+    const landmark
+    of landmarks
+  ) {
 
-    if (
-      !video.videoWidth ||
-      video.readyState < 2
-    ) {
-
-      requestAnimationFrame(
-        cameraLoop
+    const p =
+      toCanvasPoint(
+        landmark
       );
 
-      return;
-    }
+    ctx.beginPath();
+
+    ctx.arc(
+      p.x,
+      p.y,
+      2.5,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fillStyle =
+      "rgba(255,255,255,0.9)";
+
+    ctx.fill();
+
+  }
 
 
-    render();
+  ctx.restore();
+
+}
+
+
+/* =========================================================
+   RENDER
+========================================================= */
+
+function render() {
+
+  ctx.clearRect(
+
+    0,
+    0,
+    CANVAS_W,
+    CANVAS_H
+
+  );
+
+
+  /* -----------------------------------------
+     CAMERA / CROP
+  ----------------------------------------- */
+
+  if (
+
+    phase === "preview" ||
+    phase === "crop"
+
+  ) {
+
+    drawCoverVideo(
+      ctx
+    );
 
 
     if (
-      !modelReady ||
-      !handLandmarker ||
-      detectBusy ||
-      frameCount++ % 2 !== 0
+      phase === "crop"
     ) {
 
-      requestAnimationFrame(
-        cameraLoop
-      );
+      drawCropBox();
 
-      return;
+      drawTwoHandTimer();
+
     }
 
-
-    const videoTime =
-      video.currentTime;
+  }
 
 
-    if (
-      !Number.isFinite(videoTime) ||
-      videoTime <= lastVideoTime
+  /* -----------------------------------------
+     PUZZLE
+  ----------------------------------------- */
+
+  else if (
+    phase === "puzzle"
+  ) {
+
+    drawBubbles();
+
+
+    /*
+      Draw all tiles.
+    */
+
+    for (
+      let pos = 0;
+      pos < order.length;
+      pos++
     ) {
 
-      requestAnimationFrame(
-        cameraLoop
-      );
-
-      return;
-    }
-
-
-    lastVideoTime =
-      videoTime;
-
-    detectBusy = true;
-
-
-    try {
-
-      const timestampMs =
-        Math.round(
-          videoTime * 1000
-        );
-
-
-      const res =
-        handLandmarker.detectForVideo(
-          video,
-          timestampMs
-        );
-
-
-      cachedHands =
-        (
-          res.landmarks || []
-        ).map(
-          processHand
-        );
+      const tileId =
+        order[pos];
 
 
       if (
-        phase === 'crop'
+
+        heldTile &&
+        heldTile.tileId ===
+          tileId
+
       ) {
 
-        handleCropLogic(
-          cachedHands
-        );
+        continue;
 
-      } else if (
-        phase === 'puzzle'
-      ) {
-
-        handlePuzzleLogic(
-          cachedHands[0] || null
-        );
       }
 
 
-    } catch (err) {
+      const rect =
+        cellRect(
+          pos
+        );
 
-      console.error(
-        'Hand detection error:',
-        err
+
+      ctx.drawImage(
+
+        tileCanvases[
+          tileId
+        ],
+
+        rect.x,
+        rect.y,
+
+        rect.w,
+        rect.h
+
       );
 
-      instructions.textContent =
-        'Hand tracking error — keep your hand visible and well lit.';
-
-    } finally {
-
-      detectBusy = false;
     }
+
+
+    /*
+      Puzzle grid.
+    */
+
+    ctx.strokeStyle =
+      "rgba(255,255,255,0.65)";
+
+    ctx.lineWidth =
+      1.5;
+
+
+    for (
+      let i = 1;
+      i < GRID;
+      i++
+    ) {
+
+      const gx =
+        crop.x +
+        (
+          crop.w /
+          GRID
+        ) * i;
+
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        gx,
+        crop.y
+      );
+
+      ctx.lineTo(
+
+        gx,
+
+        crop.y +
+        crop.h
+
+      );
+
+      ctx.stroke();
+
+
+      const gy =
+        crop.y +
+        (
+          crop.h /
+          GRID
+        ) * i;
+
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        crop.x,
+        gy
+      );
+
+      ctx.lineTo(
+
+        crop.x +
+        crop.w,
+
+        gy
+
+      );
+
+      ctx.stroke();
+
+    }
+
+
+    /*
+      Draw held tile.
+    */
+
+    if (
+      heldTile &&
+      cursor.visible
+    ) {
+
+      const cw =
+        crop.w /
+        GRID;
+
+      const ch =
+        crop.h /
+        GRID;
+
+      const dw =
+        cw * 1.08;
+
+      const dh =
+        ch * 1.08;
+
+
+      ctx.save();
+
+
+      ctx.shadowColor =
+        "rgba(0,60,80,0.5)";
+
+      ctx.shadowBlur =
+        18;
+
+
+      ctx.drawImage(
+
+        tileCanvases[
+          heldTile.tileId
+        ],
+
+        cursor.x -
+          dw / 2,
+
+        cursor.y -
+          dh / 2,
+
+        dw,
+        dh
+
+      );
+
+
+      ctx.restore();
+
+    }
+
+
+    /*
+      Detect solved puzzle.
+    */
+
+    if (
+
+      isSolved() &&
+      !solvedShown
+
+    ) {
+
+      solvedShown =
+        true;
+
+      showWin();
+
+    }
+
+
+    /*
+      SOLVED label.
+    */
+
+    if (
+      isSolved()
+    ) {
+
+      ctx.fillStyle =
+        "rgba(255,255,255,0.95)";
+
+      ctx.font =
+        `bold ${
+          Math.round(
+            CANVAS_W *
+            0.035
+          )
+        }px sans-serif`;
+
+      ctx.textAlign =
+        "center";
+
+      ctx.fillText(
+
+        "SOLVED",
+
+        CANVAS_W / 2,
+
+        CANVAS_H *
+        0.11
+
+      );
+
+    }
+
+  }
+
+
+  /*
+    Draw hand landmarks.
+  */
+
+  cachedHands.forEach(
+    hand => {
+
+      drawHandSkeleton(
+        hand.landmarks
+      );
+
+    }
+  );
+
+
+  /*
+    Draw pinch cursor.
+  */
+
+  if (
+
+    cursor.visible &&
+    phase === "puzzle"
+
+  ) {
+
+    ctx.beginPath();
+
+    ctx.arc(
+
+      cursor.x,
+      cursor.y,
+
+      12,
+
+      0,
+      Math.PI * 2
+
+    );
+
+    ctx.strokeStyle =
+      heldTile
+        ? "#ffffff"
+        : "rgba(255,255,255,0.9)";
+
+    ctx.lineWidth =
+      3;
+
+    ctx.stroke();
+
+  }
+
+}
+
+
+/* =========================================================
+   MEDIAPIPE SETUP
+========================================================= */
+
+async function initHandTracking() {
+
+  try {
+
+    const filesetResolver =
+      await FilesetResolver
+        .forVisionTasks(
+
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+
+        );
+
+
+    handLandmarker =
+      await HandLandmarker
+        .createFromOptions(
+
+          filesetResolver,
+
+          {
+
+            baseOptions: {
+
+              modelAssetPath:
+
+                "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+
+              delegate:
+                "CPU"
+
+            },
+
+
+            runningMode:
+              "VIDEO",
+
+
+            numHands:
+              2,
+
+
+            minHandDetectionConfidence:
+              0.35,
+
+
+            minHandPresenceConfidence:
+              0.35,
+
+
+            minTrackingConfidence:
+              0.35
+
+          }
+
+        );
+
+
+    instructions.textContent =
+      "Hand tracking ready — enter your name to begin.";
+
+
+  } catch (error) {
+
+    console.error(
+      error
+    );
+
+    instructions.textContent =
+      "Hand tracking failed to load. Refresh and try again.";
+
+  }
+
+}
+
+
+/* =========================================================
+   CAMERA LOOP
+========================================================= */
+
+async function cameraLoop() {
+
+  if (
+    !video.videoWidth
+  ) {
+
+    requestAnimationFrame(
+      cameraLoop
+    );
+
+    return;
+
+  }
+
+
+  render();
+
+
+  /*
+    Only run hand detection
+    every few frames to keep
+    things smooth.
+  */
+
+  if (
+
+    !handLandmarker ||
+    detectBusy ||
+    frameCount++ % 2 !== 0
+
+  ) {
+
+    requestAnimationFrame(
+      cameraLoop
+    );
+
+    return;
+
+  }
+
+
+  const currentVideoTime =
+    video.currentTime;
+
+
+  if (
+
+    !Number.isFinite(
+      currentVideoTime
+    ) ||
+
+    currentVideoTime <=
+      lastVideoTime
+
+  ) {
+
+    requestAnimationFrame(
+      cameraLoop
+    );
+
+    return;
+
+  }
+
+
+  lastVideoTime =
+    currentVideoTime;
+
+  detectBusy =
+    true;
+
+
+  try {
+
+    const timestampMs =
+      Math.round(
+        currentVideoTime *
+        1000
+      );
+
+
+    const result =
+      handLandmarker
+        .detectForVideo(
+
+          video,
+
+          timestampMs
+
+        );
+
+
+    cachedHands =
+      (
+        result.landmarks ||
+        []
+      ).map(
+        processHand
+      );
+
+
+    if (
+      phase === "crop"
+    ) {
+
+      handleCropLogic(
+        cachedHands
+      );
+
+    }
+
+
+    else if (
+      phase === "puzzle"
+    ) {
+
+      handlePuzzleLogic(
+        cachedHands[0] ||
+        null
+      );
+
+    }
+
+
+  } catch (error) {
+
+    console.error(
+      "Hand detection error:",
+      error
+    );
+
+  } finally {
+
+    detectBusy =
+      false;
+
+  }
+
+
+  requestAnimationFrame(
+    cameraLoop
+  );
+
+}
+
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+async function startCamera() {
+
+  try {
+
+    const stream =
+      await navigator
+        .mediaDevices
+        .getUserMedia({
+
+          video: {
+
+            width: {
+              ideal: 640
+            },
+
+            height: {
+              ideal: 480
+            },
+
+            facingMode:
+              "user"
+
+          },
+
+          audio: false
+
+        });
+
+
+    video.srcObject =
+      stream;
+
+
+    await video.play();
+
+
+    instructions.textContent =
+      "Loading hand tracking…";
+
+
+    await initHandTracking();
+
+
+    initBubbles();
+
+
+    /*
+      Show the name popup
+      every time the game opens.
+    */
+
+    nameModal.style.display =
+      "flex";
+
+
+    playerName.focus();
 
 
     requestAnimationFrame(
       cameraLoop
     );
+
+
+  } catch (error) {
+
+    console.error(
+      error
+    );
+
+    instructions.textContent =
+      "Camera access failed. Please allow camera permission and refresh.";
+
   }
 
+}
 
-  /* =========================
-     BUTTONS
-  ========================= */
 
-  captureBtn.addEventListener(
-    'click',
-    () => {
+/* =========================================================
+   RESIZE
+========================================================= */
 
-      defaultCrop();
+window.addEventListener(
+  "resize",
+  () => {
 
-      phase = 'crop';
+    const oldW =
+      CANVAS_W;
 
-      captureBtnWrap.style.display =
-        'none';
+    const oldH =
+      CANVAS_H;
 
-      cropControls.style.display =
-        'flex';
 
-      postControls.style.display =
-        'none';
+    resizeCanvas();
 
-      instructions.textContent =
-        'Adjust the crop with your hand, then confirm.';
+
+    if (
+
+      phase === "crop" &&
+      oldW &&
+      oldH
+
+    ) {
+
+      crop.x *=
+        CANVAS_W /
+        oldW;
+
+      crop.w *=
+        CANVAS_W /
+        oldW;
+
+      crop.y *=
+        CANVAS_H /
+        oldH;
+
+      crop.h *=
+        CANVAS_H /
+        oldH;
+
+
+      clampCrop();
 
     }
-  );
 
 
-  confirmCropBtn.addEventListener(
-    'click',
-    () => {
-
-      capturePhoto();
-
-    }
-  );
-
-
-  cancelCropBtn.addEventListener(
-    'click',
-    () => {
-
-      phase = 'preview';
-
-      cropControls.style.display =
-        'none';
-
-      captureBtnWrap.style.display =
-        'flex';
-
-      instructions.textContent =
-        'Ready — capture a photo to make your puzzle.';
-    }
-  );
-
-
-  /* =========================
-     START CAMERA
-  ========================= */
-
-  navigator.mediaDevices
-    .getUserMedia({
-
-      video: {
-
-        width: {
-          ideal: 640,
-          min: 320
-        },
-
-        height: {
-          ideal: 480,
-          min: 240
-        },
-
-        facingMode:
-          'user'
-      },
-
-      audio: false
-
-    })
-
-
-    .then(async stream => {
-
-      video.srcObject =
-        stream;
-
-
-      await new Promise(
-        resolve => {
-
-          if (
-            video.readyState >= 1
-          ) {
-
-            resolve();
-
-          } else {
-
-            video.addEventListener(
-              'loadedmetadata',
-              resolve,
-              {
-                once: true
-              }
-            );
-          }
-        }
-      );
-
-
-      await video.play();
-
-      await initHandTracking();
-
-      lastVideoTime = -1;
+    if (
+      phase === "puzzle"
+    ) {
 
       initBubbles();
 
-      requestAnimationFrame(
-        cameraLoop
-      );
-
-    })
-
-
-    .catch(err => {
-
-      console.error(err);
-
-      instructions.textContent =
-        'Camera/hand tracking failed: ' +
-        err.message;
-    });
-
-
-  /* =========================
-     RESIZE
-  ========================= */
-
-  window.addEventListener(
-    'resize',
-    () => {
-
-      const oldW =
-        CANVAS_W;
-
-      const oldH =
-        CANVAS_H;
-
-
-      resizeCanvas();
-
-
-      if (
-        phase === 'crop' &&
-        oldW &&
-        oldH
-      ) {
-
-        crop.x *=
-          CANVAS_W / oldW;
-
-        crop.w *=
-          CANVAS_W / oldW;
-
-        crop.y *=
-          CANVAS_H / oldH;
-
-        crop.h *=
-          CANVAS_H / oldH;
-
-        clampCrop();
-      }
-
-
-      if (
-        phase === 'puzzle'
-      ) {
-
-        initBubbles();
-      }
-
     }
-  );
 
-})();
+  }
+);
+
+
+/* =========================================================
+   INITIAL SCOREBOARD
+========================================================= */
+
+renderScoreboard();
+
+
+/* =========================================================
+   START EVERYTHING
+========================================================= */
+
+startCamera();
+
+
 </script>
 
 </body>
