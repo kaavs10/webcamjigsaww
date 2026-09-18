@@ -8,76 +8,53 @@
   :root { --accent: #d9ff3a; }
   * { box-sizing: border-box; }
   html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #000;
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden; background: #000;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
-  #stage {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-  }
+  #stage { position: fixed; inset: 0; width: 100vw; height: 100vh; }
   video { display: none; }
-  canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* cute gradient background shown during puzzle phase */
+  #stage.puzzle-mode {
+    background: linear-gradient(135deg, #ff9ad5 0%, #c084fc 45%, #a78bfa 100%);
   }
+
   .top-bar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
+    position: fixed; top: 0; left: 0; right: 0;
     padding: max(14px, env(safe-area-inset-top)) 16px 10px;
     text-align: center;
     background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent);
-    z-index: 10;
-    pointer-events: none;
+    z-index: 10; pointer-events: none;
   }
   .top-bar h1 {
-    font-size: 0.95rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 3px;
+    font-size: 0.95rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 3px;
   }
-  .top-bar p {
-    color: #ddd;
-    font-size: 0.78rem;
-    margin: 0 auto;
-    max-width: 480px;
+  .top-bar p { color: #ddd; font-size: 0.78rem; margin: 0 auto; max-width: 480px; }
+
+  .timer {
+    position: fixed; top: max(14px, env(safe-area-inset-top)); right: 16px;
+    z-index: 11; color: #fff; font-weight: 700; font-size: 1rem;
+    background: rgba(0,0,0,0.45); padding: 8px 14px; border-radius: 999px;
+    display: none; letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
   }
+
   .bottom-bar {
-    position: fixed;
-    bottom: max(20px, env(safe-area-inset-bottom));
-    left: 0; right: 0;
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    z-index: 10;
+    position: fixed; bottom: max(20px, env(safe-area-inset-bottom));
+    left: 0; right: 0; display: flex; gap: 10px; justify-content: center; z-index: 10;
   }
   button {
-    background: var(--accent);
-    color: #111;
-    border: none;
-    padding: 13px 24px;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: pointer;
-    letter-spacing: 0.02em;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    background: var(--accent); color: #111; border: none;
+    padding: 13px 24px; border-radius: 999px; font-weight: 700; font-size: 0.9rem;
+    cursor: pointer; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(0,0,0,0.35);
   }
   button.secondary {
-    background: rgba(0,0,0,0.5);
-    color: var(--accent);
-    border: 1.5px solid var(--accent);
+    background: rgba(0,0,0,0.5); color: var(--accent); border: 1.5px solid var(--accent);
   }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -86,6 +63,8 @@
   <h1>Live Puzzle</h1>
   <p id="instructions">Allow camera access to begin…</p>
 </div>
+
+<div class="timer" id="timer">00:00</div>
 
 <div id="stage">
   <video id="video" playsinline autoplay muted></video>
@@ -102,19 +81,22 @@
 </div>
 
 <div class="bottom-bar" id="postControls" style="display:none;">
+  <button id="undoBtn">↩ Undo</button>
   <button id="shuffleBtn">🔀 Shuffle</button>
   <button class="secondary" id="retakeBtn">↺ Retake</button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<!-- Modern, fast MediaPipe Tasks Vision -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14"></script>
 
 <script>
 (function () {
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
+  const stage = document.getElementById('stage');
   const instructions = document.getElementById('instructions');
+  const timerEl = document.getElementById('timer');
   const captureBtn = document.getElementById('captureBtn');
   const captureBtnWrap = document.getElementById('captureBtnWrap');
   const cropControls = document.getElementById('cropControls');
@@ -122,12 +104,11 @@
   const cancelCropBtn = document.getElementById('cancelCropBtn');
   const postControls = document.getElementById('postControls');
   const shuffleBtn = document.getElementById('shuffleBtn');
+  const undoBtn = document.getElementById('undoBtn');
   const retakeBtn = document.getElementById('retakeBtn');
 
   const GRID = 3;
   const CROP_HOLD_MS = 5000;
-  // Higher detection resolution than before for stable tracking, still cheap to process.
-  const DETECT_W = 320, DETECT_H = 240;
 
   let CANVAS_W = 0, CANVAS_H = 0;
   function resizeCanvas() {
@@ -135,11 +116,6 @@
     CANVAS_H = canvas.height = window.innerHeight;
   }
   resizeCanvas();
-
-  const detectCanvas = document.createElement('canvas');
-  detectCanvas.width = DETECT_W;
-  detectCanvas.height = DETECT_H;
-  const detectCtx = detectCanvas.getContext('2d');
 
   // phase: 'preview' -> 'crop' -> 'puzzle'
   let phase = 'preview';
@@ -150,6 +126,11 @@
   let prevPinching = false;
   let solvedShown = false;
 
+  // undo + timer state
+  let moveHistory = [];
+  let timerStart = 0;
+  let timerInterval = null;
+
   let crop = { x: 0, y: 0, w: 0, h: 0 };
   let cropGrab = null;
   let twoHandTimerActive = false;
@@ -157,24 +138,58 @@
 
   let cachedHands = [];
 
-  // --- cover-fit video mapping (video -> full-screen canvas) ---
+  // --- cute background bubbles ---
+  const bubbles = [];
+  function initBubbles() {
+    bubbles.length = 0;
+    const count = Math.min(28, Math.floor(Math.min(CANVAS_W, CANVAS_H) / 28));
+    for (let i = 0; i < count; i++) {
+      bubbles.push({
+        x: Math.random() * CANVAS_W,
+        y: Math.random() * CANVAS_H,
+        r: 6 + Math.random() * 22,
+        speed: 0.3 + Math.random() * 0.9,
+        drift: (Math.random() - 0.5) * 0.6,
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: 0.01 + Math.random() * 0.03,
+        alpha: 0.12 + Math.random() * 0.25
+      });
+    }
+  }
+  function drawBubbles() {
+    for (const b of bubbles) {
+      b.y -= b.speed;
+      b.wobble += b.wobbleSpeed;
+      const bx = b.x + Math.sin(b.wobble) * 14;
+      if (b.y < -b.r * 2) { b.y = CANVAS_H + b.r * 2; b.x = Math.random() * CANVAS_W; }
+      ctx.beginPath();
+      ctx.arc(bx, b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${b.alpha})`;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(bx - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${b.alpha * 0.8})`;
+      ctx.fill();
+    }
+  }
+
+  // --- cover-fit video mapping ---
   function getCoverTransform() {
-    const vw = video.videoWidth || DETECT_W;
-    const vh = video.videoHeight || DETECT_H;
+    const vw = video.videoWidth || 640;
+    const vh = video.videoHeight || 480;
     const scale = Math.max(CANVAS_W / vw, CANVAS_H / vh);
     const drawW = vw * scale, drawH = vh * scale;
     return { vw, vh, scale, drawW, drawH, offsetX: (CANVAS_W - drawW) / 2, offsetY: (CANVAS_H - drawH) / 2 };
   }
 
-  // selfieMode mirrors the feed in MediaPipe, so no manual flip is needed here.
   function drawCoverVideo(targetCtx) {
     const t = getCoverTransform();
     targetCtx.drawImage(video, t.offsetX, t.offsetY, t.drawW, t.drawH);
   }
 
-  function toCanvasPoint(landmark) {
+  function toCanvasPoint(lm) {
     const t = getCoverTransform();
-    return { x: t.offsetX + landmark.x * t.vw * t.scale, y: t.offsetY + landmark.y * t.vh * t.scale };
+    return { x: t.offsetX + lm.x * t.vw * t.scale, y: t.offsetY + lm.y * t.vh * t.scale };
   }
 
   function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
@@ -253,9 +268,29 @@
     } while (isSolved());
     solvedShown = false;
     heldTile = null;
+    moveHistory = [];
+    updateUndoBtn();
   }
 
   function isSolved() { return order.every((v, i) => v === i); }
+
+  // --- timer ---
+  function startTimer() {
+    stopTimer();
+    timerStart = Date.now();
+    timerEl.style.display = 'block';
+    timerInterval = setInterval(updateTimer, 250);
+    updateTimer();
+  }
+  function stopTimer() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  }
+  function updateTimer() {
+    const s = Math.floor((Date.now() - timerStart) / 1000);
+    const mm = String(Math.floor(s / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    timerEl.textContent = `${mm}:${ss}`;
+  }
 
   function capturePhoto() {
     const shot = document.createElement('canvas');
@@ -269,6 +304,9 @@
     captureBtnWrap.style.display = 'none';
     cropControls.style.display = 'none';
     postControls.style.display = 'flex';
+    stage.classList.add('puzzle-mode');
+    initBubbles();
+    startTimer();
     instructions.textContent = 'Pinch a tile, drag it onto another to swap.';
   }
 
@@ -284,22 +322,40 @@
 
   function backToPreview() {
     phase = 'preview';
+    stopTimer();
+    timerEl.style.display = 'none';
     twoHandTimerActive = false;
     cropGrab = null;
+    heldTile = null;
     captureBtnWrap.style.display = 'flex';
     cropControls.style.display = 'none';
     postControls.style.display = 'none';
+    stage.classList.remove('puzzle-mode');
     instructions.textContent = 'Frame yourself, then capture.';
+  }
+
+  // --- undo ---
+  function updateUndoBtn() { undoBtn.disabled = moveHistory.length === 0; }
+  function undoMove() {
+    if (moveHistory.length === 0 || phase !== 'puzzle') return;
+    const m = moveHistory.pop();
+    const temp = order[m.fromPos];
+    order[m.fromPos] = order[m.toPos];
+    order[m.toPos] = temp;
+    heldTile = null;
+    solvedShown = isSolved();
+    updateUndoBtn();
+    instructions.textContent = 'Undid last move.';
   }
 
   captureBtn.addEventListener('click', enterCropPhase);
   confirmCropBtn.addEventListener('click', () => { clampCrop(); capturePhoto(); });
   cancelCropBtn.addEventListener('click', backToPreview);
-  shuffleBtn.addEventListener('click', () => { shuffle(); instructions.textContent = 'Shuffled! Solve it again.'; });
+  shuffleBtn.addEventListener('click', () => { shuffle(); startTimer(); instructions.textContent = 'Shuffled! Solve it again.'; });
+  undoBtn.addEventListener('click', undoMove);
   retakeBtn.addEventListener('click', backToPreview);
 
   // === drawing ===
-
   function drawHandSkeleton(landmarks) {
     const connections = [
       [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
@@ -379,6 +435,8 @@
       drawCoverVideo(ctx);
       if (phase === 'crop') { drawCropBox(); drawTwoHandTimer(); }
     } else {
+      drawBubbles();
+
       for (let pos = 0; pos < order.length; pos++) {
         const tileId = order[pos];
         if (heldTile && heldTile.tileId === tileId) continue;
@@ -401,7 +459,11 @@
         ctx.drawImage(tileCanvases[heldTile.tileId], cursor.x - dw / 2, cursor.y - dh / 2, dw, dh);
         ctx.restore();
       }
-      if (isSolved() && !solvedShown) { solvedShown = true; instructions.innerHTML = '🎉 Solved!'; }
+      if (isSolved() && !solvedShown) {
+        solvedShown = true;
+        stopTimer();
+        instructions.innerHTML = '🎉 Solved!';
+      }
       if (isSolved()) {
         ctx.fillStyle = 'rgba(217,255,58,0.95)';
         ctx.font = `bold ${Math.round(CANVAS_W * 0.032)}px sans-serif`;
@@ -420,8 +482,7 @@
     }
   }
 
-  // === interaction logic, run once per MediaPipe detection ===
-
+  // === interaction logic ===
   function handleSingleHandCrop(hand) {
     if (!hand) { prevPinching = false; cropGrab = null; return; }
     const pinching = hand.pinching;
@@ -493,6 +554,8 @@
           const otherTile = order[dropPos];
           order[dropPos] = heldTile.tileId;
           order[heldTile.fromPos] = otherTile;
+          moveHistory.push({ fromPos: heldTile.fromPos, toPos: dropPos });
+          updateUndoBtn();
         }
         heldTile = null;
       }
@@ -500,37 +563,54 @@
     prevPinching = pinching;
   }
 
-  // === MediaPipe setup ===
-  const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
-  hands.setOptions({
-    maxNumHands: 2,
-    modelComplexity: 0,          // lite model: fast, plenty accurate for pinch detection
-    selfieMode: true,            // mirrors feed so landmarks match the displayed video
-    minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.6
-  });
-
-  hands.onResults((results) => {
-    cachedHands = (results.multiHandLandmarks || []).map(processHand);
-    if (phase === 'crop') handleCropLogic(cachedHands);
-    else if (phase === 'puzzle') handlePuzzleLogic(cachedHands[0] || null);
-  });
-
+  // === MediaPipe Tasks Vision setup ===
+  let handLandmarker = null;
+  let detectBusy = false;
   let frameCount = 0;
-  const camera = new Camera(video, {
-    onFrame: async () => {
-      render(); // always redraw at full camera framerate, independent of detection speed
-      if (++frameCount % 3 !== 0) return; // run detection every 3rd frame to save CPU
-      detectCtx.drawImage(video, 0, 0, DETECT_W, DETECT_H);
-      await hands.send({ image: detectCanvas });
-    },
-    width: 640,   // lower camera resolution: cheaper draws, still looks fine full-screen
-    height: 480
-  });
 
-  camera.start()
-    .then(() => { instructions.textContent = 'Frame yourself, then capture.'; })
-    .catch((err) => { instructions.textContent = 'Camera access failed: ' + err.message; });
+  async function initHandTracking() {
+    const filesetResolver = await FilesetResolver.forVisionTasks(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+    );
+    handLandmarker = await HandLandmarker.createFromOptions(filesetResolver, {
+      baseOptions: {
+        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+        delegate: 'GPU'
+      },
+      runningMode: 'VIDEO',
+      numHands: 2,
+      minHandDetectionConfidence: 0.5,
+      minHandPresenceConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+    instructions.textContent = 'Frame yourself, then capture.';
+  }
+
+  async function cameraLoop() {
+    if (!video.videoWidth) { requestAnimationFrame(cameraLoop); return; }
+    render();
+    if (!handLandmarker || detectBusy || frameCount++ % 3 !== 0) { requestAnimationFrame(cameraLoop); return; }
+    detectBusy = true;
+    try {
+      const res = handLandmarker.detectForVideo(video, performance.now());
+      cachedHands = (res.landmarks || []).map(processHand);
+      if (phase === 'crop') handleCropLogic(cachedHands);
+      else if (phase === 'puzzle') handlePuzzleLogic(cachedHands[0] || null);
+    } finally {
+      detectBusy = false;
+    }
+    requestAnimationFrame(cameraLoop);
+  }
+
+  // start camera
+  navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 480 }, height: { ideal: 360 }, facingMode: 'user' }, audio: false })
+    .then(stream => {
+      video.srcObject = stream;
+      video.play();
+      initHandTracking();
+      requestAnimationFrame(cameraLoop);
+    })
+    .catch(err => { instructions.textContent = 'Camera access failed: ' + err.message; });
 
   window.addEventListener('resize', () => {
     const oldW = CANVAS_W, oldH = CANVAS_H;
@@ -540,6 +620,7 @@
       crop.y *= CANVAS_H / oldH; crop.h *= CANVAS_H / oldH;
       clampCrop();
     }
+    if (phase === 'puzzle') initBubbles();
   });
 })();
 </script>
