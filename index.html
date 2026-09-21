@@ -742,6 +742,11 @@
       🏆 Scoreboard
     </h2>
 
+    <p
+      id="avgRatingDisplay"
+      style="color:#164e63; font-size:0.85rem; margin-top:-8px;"
+    ></p>
+
     <div
       id="scoreboardList"
       class="scoreboard"
@@ -951,6 +956,9 @@ from
 
   const SCORE_KEY =
     "oceanJigsawScoreboard";
+
+  const RATING_KEY =
+    "oceanJigsawRatings";
 
 
   /* =========================================================
@@ -4020,6 +4028,129 @@ from
   }
 
 
+  function getRatings() {
+
+    try {
+
+      const saved =
+        localStorage.getItem(
+          RATING_KEY
+        );
+
+
+      if (!saved) {
+
+        return [];
+      }
+
+
+      const ratings =
+        JSON.parse(
+          saved
+        );
+
+
+      return Array.isArray(
+        ratings
+      )
+        ? ratings
+        : [];
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        error
+      );
+
+      return [];
+    }
+  }
+
+
+  function saveRating(
+    rating
+  ) {
+
+    try {
+
+      const ratings =
+        getRatings();
+
+
+      ratings.push({
+
+        rating:
+          rating,
+
+        name:
+          playerName ||
+          "Player",
+
+        date:
+          new Date().toISOString()
+
+      });
+
+
+      localStorage.setItem(
+        RATING_KEY,
+        JSON.stringify(
+          ratings
+        )
+      );
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        error
+      );
+    }
+  }
+
+
+  function getAverageRating() {
+
+    const ratings =
+      getRatings();
+
+
+    if (
+      ratings.length === 0
+    ) {
+
+      return null;
+    }
+
+
+    const sum =
+      ratings.reduce(
+        (
+          total,
+          r
+        ) =>
+          total +
+          r.rating,
+        0
+      );
+
+
+    return {
+
+      average:
+        sum /
+        ratings.length,
+
+      count:
+        ratings.length
+
+    };
+  }
+
+
   function formatScoreTime(
     milliseconds
   ) {
@@ -4056,6 +4187,18 @@ from
 
 
   function renderScoreboard() {
+
+    const avg =
+      getAverageRating();
+
+
+    document.getElementById(
+      "avgRatingDisplay"
+    ).textContent =
+      avg
+        ? `⭐ ${avg.average.toFixed(1)} average (${avg.count} rating${avg.count === 1 ? "" : "s"})`
+        : "No ratings yet";
+
 
     const scores =
       getScores();
@@ -4213,6 +4356,8 @@ from
               );
             }
           );
+
+          saveRating(rating);
 
           setTimeout(
             () => {
