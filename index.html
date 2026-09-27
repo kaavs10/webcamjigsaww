@@ -402,6 +402,21 @@
     padding: 20px;
   }
 
+  .score-row.rank-1 {
+    background: rgba(255, 215, 0, 0.35);
+    border: 1.5px solid rgba(212, 160, 0, 0.6);
+  }
+
+  .score-row.rank-2 {
+    background: rgba(192, 192, 192, 0.35);
+    border: 1.5px solid rgba(140, 140, 140, 0.6);
+  }
+
+  .score-row.rank-3 {
+    background: rgba(205, 127, 50, 0.28);
+    border: 1.5px solid rgba(170, 100, 40, 0.6);
+  }
+
   /* =========================
      INSTRUCTIONS + RATING
   ========================= */
@@ -614,6 +629,19 @@
     ↺ Retake
   </button>
 
+</div>
+
+
+<!-- =========================
+     TITLE / COVER SCREEN
+========================= -->
+
+<div class="modal-overlay" id="titleModal">
+  <div class="modal">
+    <h2>🌊 Ocean Jigsaw</h2>
+    <p>A webcam hand-tracking jigsaw puzzle.</p>
+    <button id="titleStartBtn">Start ▶</button>
+  </div>
 </div>
 
 
@@ -914,6 +942,16 @@ from
   const instructionsModal =
     document.getElementById(
       "instructionsModal"
+    );
+
+  const titleModal =
+    document.getElementById(
+      "titleModal"
+    );
+
+  const titleStartBtn =
+    document.getElementById(
+      "titleStartBtn"
     );
 
   const closeInstructionsBtn =
@@ -2151,7 +2189,15 @@ from
      RETURN TO NAME SCREEN
   ========================================================= */
 
+  function showTitle() {
+    instructionsModal.style.display = "none";
+    startModal.style.display = "none";
+    ratingModal.style.display = "none";
+    titleModal.style.display = "flex";
+  }
+
   function showInstructions() {
+    titleModal.style.display = "none";
     startModal.style.display = "none";
     ratingModal.style.display = "none";
     instructionsModal.style.display = "flex";
@@ -2159,11 +2205,19 @@ from
 
   function showNameScreen() {
     instructionsModal.style.display = "none";
+    playerNameInput.value = "";
     startModal.style.display = "flex";
     playerNameInput.focus();
   }
 
-  function returnToNameScreen() {
+  titleStartBtn.addEventListener(
+    "click",
+    () => {
+      showInstructions();
+    }
+  );
+
+  function resetToBeginning() {
 
     phase =
       "preview";
@@ -2211,14 +2265,9 @@ from
       "";
 
     instructions.textContent =
-      "Enter your name to begin.";
+      "Frame yourself, then capture.";
 
-    setTimeout(
-      () => {
-        showInstructions();
-      },
-      150
-    );
+    showTitle();
   }
 
 
@@ -4192,12 +4241,79 @@ from
       getAverageRating();
 
 
-    document.getElementById(
-      "avgRatingDisplay"
-    ).textContent =
-      avg
-        ? `⭐ ${avg.average.toFixed(1)} average (${avg.count} rating${avg.count === 1 ? "" : "s"})`
-        : "No ratings yet";
+    let avgEl =
+      document.getElementById(
+        "avgRatingDisplay"
+      );
+
+
+    /*
+      SELF-HEALING:
+
+      If the <p id="avgRatingDisplay">
+      element is missing from the HTML
+      for any reason, create it here
+      instead of throwing and silently
+      breaking the rest of the
+      scoreboard render.
+    */
+
+    if (!avgEl) {
+
+      console.warn(
+        "avgRatingDisplay element not found in HTML — creating it now."
+      );
+
+      avgEl =
+        document.createElement(
+          "p"
+        );
+
+      avgEl.id =
+        "avgRatingDisplay";
+
+      avgEl.style.color =
+        "#164e63";
+
+      avgEl.style.fontSize =
+        "0.85rem";
+
+      avgEl.style.marginTop =
+        "-8px";
+
+      const scoreboardModalEl =
+        document.getElementById(
+          "scoreboardModal"
+        );
+
+      const modalBox =
+        scoreboardModalEl
+          ? scoreboardModalEl.querySelector(
+              ".modal"
+            )
+          : null;
+
+      if (
+        modalBox &&
+        scoreboardList
+      ) {
+
+        modalBox.insertBefore(
+          avgEl,
+          scoreboardList
+        );
+
+      }
+    }
+
+
+    if (avgEl) {
+
+      avgEl.textContent =
+        avg
+          ? `⭐ ${avg.average.toFixed(1)} average (${avg.count} rating${avg.count === 1 ? "" : "s"})`
+          : "No ratings yet";
+    }
 
 
     const scores =
@@ -4235,13 +4351,31 @@ from
                   ).toLocaleDateString()
                 : "";
 
+            const rankClass =
+              index === 0
+                ? " rank-1"
+                : index === 1
+                  ? " rank-2"
+                  : index === 2
+                    ? " rank-3"
+                    : "";
+
+            const medal =
+              index === 0
+                ? "🥇 "
+                : index === 1
+                  ? "🥈 "
+                  : index === 2
+                    ? "🥉 "
+                    : "";
+
 
             return `
 
-              <div class="score-row">
+              <div class="score-row${rankClass}">
 
                 <span>
-                  ${index + 1}
+                  ${medal}${index + 1}
                 </span>
 
                 <span class="score-name">
@@ -4362,7 +4496,7 @@ from
           setTimeout(
             () => {
               ratingModal.style.display = "none";
-              showInstructions();
+              resetToBeginning();
             },
             350
           );
@@ -4638,11 +4772,12 @@ from
 
 
   /*
-    Show instructions first when the
-    page is opened.
+    Show the title screen first when
+    the page is opened. Instructions
+    only appear after pressing Start.
   */
 
-  instructionsModal.style.display =
+  titleModal.style.display =
     "flex";
 
 
