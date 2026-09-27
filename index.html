@@ -542,45 +542,34 @@ body{
 </style>
 
 
-<style id="rating-timer-preview-layout">
-/* Rating stays above everything in the top-right */
+
+
+
+<style id="rating-timer-preview-layout-v2">
 #gameAverageRating{
   position:fixed !important;
   top:18px !important;
   right:18px !important;
   z-index:6000 !important;
 }
-
-/* Timer sits directly underneath the rating once the game starts.
-   The game itself can still change display/visibility. */
-#timerBubble,
-#timer,
-.timer-bubble,
-#gameTimer{
+#timer{
+  position:fixed !important;
+  top:76px !important;
+  right:18px !important;
   z-index:5900 !important;
 }
-
-/* Reference image sits underneath the timer, on the right. */
 #referencePreviewPanel{
-  top:150px !important;
+  position:fixed !important;
+  top:128px !important;
   right:18px !important;
+  width:min(270px,24vw) !important;
+  min-width:200px !important;
   z-index:5800 !important;
-  width:min(260px,22vw) !important;
 }
-
-/* If the existing timer uses a fixed top position, override common
-   selectors so it does not overlap the rating. */
-#timerBubble,
-#timer,
-.timer-bubble,
-#gameTimer{
-  top:82px !important;
-  right:18px !important;
-}
-
-/* Keep reference hidden until the game has started/capture exists. */
-#referencePreviewPanel{
-  display:none;
+#referencePreviewImage{
+  width:100% !important;
+  max-height:260px !important;
+  object-fit:contain !important;
 }
 </style>
 
@@ -2042,6 +2031,10 @@ from
     timerEl.textContent =
       "01:00";
 
+    timerEl.style.top = "76px";
+    referencePreviewPanel.style.top = "128px";
+    referencePreviewPanel.style.display = "block";
+
     timerEl.style.display =
       "block";
 
@@ -2165,6 +2158,11 @@ from
       shotCtx
     );
 
+    // The exact picture used to make the puzzle is shown as a reference.
+    showPuzzleReference(
+      shot.toDataURL("image/jpeg", 0.88)
+    );
+
 
     /*
       IMPORTANT:
@@ -2277,6 +2275,9 @@ from
     timerEl.style.display =
       "none";
 
+    referencePreviewPanel.style.display =
+      "none";
+
     twoHandTimerActive =
       false;
 
@@ -2356,6 +2357,9 @@ from
     stopTimer();
 
     timerEl.style.display =
+      "none";
+
+    referencePreviewPanel.style.display =
       "none";
 
     twoHandTimerActive =
@@ -4780,6 +4784,9 @@ from
     timerEl.style.display =
       "none";
 
+    referencePreviewPanel.style.display =
+      "none";
+
 
     resultEmoji.textContent =
       "😭";
@@ -5370,6 +5377,29 @@ document.addEventListener("DOMContentLoaded", () => {
   /* Reposition after the game has had time to reveal the timer. */
   setTimeout(positionGameHud, 100);
   setTimeout(positionGameHud, 500);
+});
+</script>
+
+
+<script id="hud-resize-fix">
+window.addEventListener("resize", () => {
+  const rating = document.getElementById("gameAverageRating");
+  const timer = document.getElementById("timer");
+  const preview = document.getElementById("referencePreviewPanel");
+  if (!rating || !timer) return;
+
+  const rb = rating.getBoundingClientRect();
+
+  if (timer.style.display !== "none") {
+    timer.style.top = (rb.bottom + 10) + "px";
+    timer.style.right = "18px";
+  }
+
+  if (preview && preview.style.display !== "none") {
+    const tb = timer.getBoundingClientRect();
+    preview.style.top = (tb.bottom + 12) + "px";
+    preview.style.right = "18px";
+  }
 });
 </script>
 
