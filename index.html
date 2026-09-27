@@ -504,9 +504,53 @@
     }
   }
 </style>
+
+<style id="beachy-rating-preview">
+:root{--sea:#0ea5b7;--deep-sea:#075985;}
+body{
+  background:
+    radial-gradient(circle at 12% 18%,rgba(255,255,255,.55) 0 2px,transparent 3px),
+    radial-gradient(circle at 80% 25%,rgba(255,255,255,.4) 0 2px,transparent 3px),
+    linear-gradient(135deg,#dff8ff 0%,#b9eff5 48%,#fff3d2 100%) !important;
+}
+#gameAverageRating{
+  position:fixed;top:18px;right:18px;z-index:5000;
+  min-width:142px;padding:10px 15px;border-radius:999px;
+  background:rgba(255,255,255,.92);
+  border:2px solid rgba(14,165,183,.35);
+  box-shadow:0 8px 24px rgba(7,89,133,.16);
+  color:var(--deep-sea);font-weight:800;text-align:center;
+  backdrop-filter:blur(8px);
+}
+#referencePreviewPanel{
+  position:fixed;top:78px;right:18px;z-index:4999;
+  width:min(260px,22vw);min-width:190px;padding:10px;
+  border-radius:18px;background:rgba(255,255,255,.92);
+  border:3px solid rgba(14,165,183,.28);
+  box-shadow:0 10px 28px rgba(7,89,133,.18);
+  display:none;backdrop-filter:blur(8px);
+}
+#referencePreviewPanel .preview-label{
+  text-align:center;color:var(--deep-sea);font-weight:800;
+  font-size:.9rem;margin-bottom:7px;
+}
+#referencePreviewImage{
+  display:block;width:100%;height:auto;max-height:235px;
+  object-fit:contain;border-radius:12px;background:#e8faff;
+  border:2px solid rgba(14,165,183,.2);
+}
+</style>
+
 </head>
 
 <body>
+
+<div id="gameAverageRating">⭐ <span id="gameAverageRatingValue">—</span></div>
+<div id="referencePreviewPanel">
+  <div class="preview-label">🌊 Picture Reference</div>
+  <img id="referencePreviewImage" alt="Picture reference for the puzzle">
+</div>
+
 
 <!-- =========================
      SCOREBOARD BUTTON
@@ -806,6 +850,44 @@ from
 
 
 (function () {
+
+  const gameAverageRating =
+    document.getElementById("gameAverageRatingValue");
+  const referencePreviewPanel =
+    document.getElementById("referencePreviewPanel");
+  const referencePreviewImage =
+    document.getElementById("referencePreviewImage");
+
+  function updateGameAverageRating() {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem("oceanJigsawRatings") || "[]"
+      );
+      const values = Array.isArray(saved)
+        ? saved.map(r => Number(typeof r === "object" ? r.rating : r))
+            .filter(r => Number.isFinite(r) && r >= 1 && r <= 5)
+        : [];
+      gameAverageRating.textContent = values.length
+        ? (values.reduce((a,b) => a+b, 0) / values.length).toFixed(1) + " / 5"
+        : "No ratings";
+    } catch (error) {
+      gameAverageRating.textContent = "No ratings";
+    }
+  }
+
+  function showPuzzleReference(source) {
+    if (!source) return;
+    referencePreviewImage.src = source;
+    referencePreviewPanel.style.display = "block";
+  }
+
+  function hidePuzzleReference() {
+    referencePreviewPanel.style.display = "none";
+    referencePreviewImage.removeAttribute("src");
+  }
+
+  updateGameAverageRating();
+
 
   /* =========================================================
      ELEMENTS
@@ -4149,6 +4231,8 @@ from
           ratings
         )
       );
+
+    updateGameAverageRating();
 
     } catch (
       error
