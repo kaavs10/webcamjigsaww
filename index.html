@@ -541,6 +541,49 @@ body{
 }
 </style>
 
+
+<style id="rating-timer-preview-layout">
+/* Rating stays above everything in the top-right */
+#gameAverageRating{
+  position:fixed !important;
+  top:18px !important;
+  right:18px !important;
+  z-index:6000 !important;
+}
+
+/* Timer sits directly underneath the rating once the game starts.
+   The game itself can still change display/visibility. */
+#timerBubble,
+#timer,
+.timer-bubble,
+#gameTimer{
+  z-index:5900 !important;
+}
+
+/* Reference image sits underneath the timer, on the right. */
+#referencePreviewPanel{
+  top:150px !important;
+  right:18px !important;
+  z-index:5800 !important;
+  width:min(260px,22vw) !important;
+}
+
+/* If the existing timer uses a fixed top position, override common
+   selectors so it does not overlap the rating. */
+#timerBubble,
+#timer,
+.timer-bubble,
+#gameTimer{
+  top:82px !important;
+  right:18px !important;
+}
+
+/* Keep reference hidden until the game has started/capture exists. */
+#referencePreviewPanel{
+  display:none;
+}
+</style>
+
 </head>
 
 <body>
@@ -5262,6 +5305,72 @@ from
 
 })();
 
+</script>
+
+
+<script id="layout-state-fix">
+document.addEventListener("DOMContentLoaded", () => {
+  const rating = document.getElementById("gameAverageRating");
+  const preview = document.getElementById("referencePreviewPanel");
+
+  const timer = document.querySelector(
+    "#timerBubble, #timer, .timer-bubble, #gameTimer"
+  );
+
+  function positionGameHud() {
+    if (!timer || !rating) return;
+
+    const r = rating.getBoundingClientRect();
+    timer.style.position = "fixed";
+    timer.style.top = (r.bottom + 10) + "px";
+    timer.style.right = "18px";
+
+    if (preview) {
+      const t = timer.getBoundingClientRect();
+      preview.style.top = (t.bottom + 12) + "px";
+      preview.style.right = "18px";
+    }
+  }
+
+  function updatePreviewVisibility() {
+    if (!preview) return;
+
+    const gameActive =
+      document.body.classList.contains("game-active") ||
+      document.body.classList.contains("playing") ||
+      document.body.classList.contains("gameStarted");
+
+    const hasImage =
+      !!document.getElementById("referencePreviewImage")?.getAttribute("src");
+
+    if (gameActive && hasImage) {
+      preview.style.display = "block";
+      positionGameHud();
+    } else if (!hasImage) {
+      preview.style.display = "none";
+    }
+  }
+
+  positionGameHud();
+
+  window.addEventListener("resize", positionGameHud);
+
+  const observer = new MutationObserver(() => {
+    positionGameHud();
+    updatePreviewVisibility();
+  });
+
+  observer.observe(document.body, {
+    attributes: true,
+    childList: true,
+    subtree: true,
+    attributeFilter: ["class", "style"]
+  });
+
+  /* Reposition after the game has had time to reveal the timer. */
+  setTimeout(positionGameHud, 100);
+  setTimeout(positionGameHud, 500);
+});
 </script>
 
 </body>
