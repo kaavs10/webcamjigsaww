@@ -1099,12 +1099,20 @@ from
     60 * 1000;
 
   /*
-    Crop auto-frame timer.
-    This is NOT the game timer.
+    How long both pinch gestures must be held
+    before the photo is captured. No visible timer.
   */
 
   const CROP_HOLD_MS =
-    5000;
+    1800;
+
+  /*
+    Small grace period for occasional MediaPipe
+    detection flicker.
+  */
+
+  const CROP_GESTURE_GRACE_MS =
+    550;
 
   const SCORE_KEY =
     "oceanJigsawScoreboard";
@@ -1224,6 +1232,9 @@ from
 
 
   let twoHandTimerStart =
+    0;
+
+  let twoHandLastSeen =
     0;
 
 
@@ -1573,16 +1584,23 @@ from
 
 
     /*
-      Slightly more forgiving pinch
-      detection.
+      More robust pinch detection.
+
+      The larger threshold makes the gesture
+      easier to trigger at different distances
+      from the webcam while still requiring the
+      thumb and index finger to be close together.
     */
 
-    const pinching =
+    const pinchDistance =
       dist(
         thumbTip,
         indexTip
-      ) <
-      handScale * 0.60;
+      );
+
+    const pinching =
+      pinchDistance <
+      handScale * 0.72;
 
 
     return {
@@ -2190,6 +2208,10 @@ from
 
     twoHandTimerActive =
       false;
+    twoHandTimerStart =
+      0;
+    twoHandLastSeen =
+      0;
 
     cropGrab =
       null;
@@ -2234,6 +2256,10 @@ from
 
     twoHandTimerActive =
       false;
+    twoHandTimerStart =
+      0;
+    twoHandLastSeen =
+      0;
 
     cropGrab =
       null;
@@ -2280,6 +2306,10 @@ from
 
     twoHandTimerActive =
       false;
+    twoHandTimerStart =
+      0;
+    twoHandLastSeen =
+      0;
 
     cropGrab =
       null;
@@ -2364,6 +2394,10 @@ from
 
     twoHandTimerActive =
       false;
+    twoHandTimerStart =
+      0;
+    twoHandLastSeen =
+      0;
 
     cropGrab =
       null;
@@ -3005,8 +3039,6 @@ from
       ) {
 
         drawCropBox();
-
-        drawTwoHandTimer();
       }
 
     } else {
@@ -3554,108 +3586,76 @@ from
     hands2
   ) {
 
+    const now =
+      performance.now();
+
     const twoHandMode =
       hands2.length >= 2 &&
       hands2[0].pinching &&
       hands2[1].pinching;
 
+    if (twoHandMode) {
+      cropGrab = null;
 
-    if (
-      twoHandMode
-    ) {
+      const p1 = hands2[0].pinchPoint;
+      const p2 = hands2[1].pinchPoint;
 
-      cropGrab =
-        null;
+      const targetX = Math.min(p1.x, p2.x);
+      const targetY = Math.min(p1.y, p2.y);
+      const targetW = Math.abs(p1.x - p2.x);
+      const targetH = Math.abs(p1.y - p2.y);
 
-
-      const p1 =
-        hands2[0]
-          .pinchPoint;
-
-      const p2 =
-        hands2[1]
-          .pinchPoint;
-
-
-      crop = {
-
-        x:
-          Math.min(
-            p1.x,
-            p2.x
-          ),
-
-        y:
-          Math.min(
-            p1.y,
-            p2.y
-          ),
-
-        w:
-          Math.abs(
-            p1.x -
-            p2.x
-          ),
-
-        h:
-          Math.abs(
-            p1.y -
-            p2.y
-          )
-
-      };
-
-
-      softClampCrop();
-
-
-      if (
-        !twoHandTimerActive
-      ) {
-
-        twoHandTimerActive =
-          true;
-
-        twoHandTimerStart =
-          performance.now();
+      /* Smooth tiny landmark jitter so the crop stays stable. */
+      if (!twoHandTimerActive) {
+        crop = {
+          x: targetX,
+          y: targetY,
+          w: targetW,
+          h: targetH
+        };
+      } else {
+        const smoothing = 0.35;
+        crop.x += (targetX - crop.x) * smoothing;
+        crop.y += (targetY - crop.y) * smoothing;
+        crop.w += (targetW - crop.w) * smoothing;
+        crop.h += (targetH - crop.h) * smoothing;
       }
 
+      softClampCrop();
+      twoHandLastSeen = now;
 
-      /*
-        Auto-capture ONLY after
-        holding both pinches for
-        5 seconds.
-      */
+      if (!twoHandTimerActive) {
+        twoHandTimerActive = true;
+        twoHandTimerStart = now;
+      }
 
-      if (
-        performance.now() -
-          twoHandTimerStart >=
-        CROP_HOLD_MS
-      ) {
-
+      /* Capture after a stable hold — no visible timer. */
+      if (now - twoHandTimerStart >= CROP_HOLD_MS) {
         clampCrop();
-
         capturePhoto();
       }
 
-
-      cursor.visible =
-        false;
-
+      cursor.visible = false;
       return;
     }
 
+    /* Allow brief MediaPipe detection flicker without resetting. */
+    if (
+      twoHandTimerActive &&
+      now - twoHandLastSeen <= CROP_GESTURE_GRACE_MS
+    ) {
+      cursor.visible = false;
+      return;
+    }
 
-    twoHandTimerActive =
-      false;
-
+    twoHandTimerActive = false;
+    twoHandTimerStart = 0;
+    twoHandLastSeen = 0;
 
     handleSingleHandCrop(
-      hands2[0] ||
-      null
+      hands2[0] || null
     );
   }
-
 
   /* =========================================================
      PUZZLE HAND LOGIC
